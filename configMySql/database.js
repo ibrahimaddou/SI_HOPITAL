@@ -7,5 +7,10 @@ const pool = mysql.createPool({
     database: 'hopital'
 }).promise()  //promise pour avoir la possibilité d'utliser async
 
-const resultat = await pool.query("SELECT * FROM test")
-console.log(resultat)
+
+async function getMedecins(){
+    const [rows]= await pool.query("select personne.id_personne, personne.nom, personne.prenom , medecin.specialite from medecin, employe , personne where medecin.id_employe=employe.id_employe and employe.id_personne =personne.id_personne;")
+    return rows;
+}
+const notes = await getMedecins();
+console.log(notes);
