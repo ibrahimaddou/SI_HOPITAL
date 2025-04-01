@@ -77,5 +77,5 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
 //console.log(getmedecin);
 
 // afficher tous les medecins
-const medecins = await getMedecins();
-console.log(medecins);
+//const medecins = await getMedecins();
+//console.log(medecins);
