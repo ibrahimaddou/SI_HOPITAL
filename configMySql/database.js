@@ -25,11 +25,50 @@ async function getMedecinById(id){ // pour afficher les infos de medicin avec un
         and employe.id_personne =personne.id_personne;`,[id]  
          // eviter de l'injecter dans la requete avec  ${id} pour des raisons de security SQL injection
     );
-    return rows;
+    return rows[0];
 }
 
-const getmedecin = await getMedecinById(2); //exemple le medecin qui a l' id 2
-console.log(getmedecin);
+// creer une personne   
+async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite){
+    // Insérer dans la table PERSONNE
+    const [resultPersonne] = await pool.query(`
+        INSERT INTO PERSONNE (nom, prenom, adresse, telephone, email) 
+        VALUES (?, ?, ?, ?, ?);
+    `, [nom, prenom, adresse, telephone, email]);
+    
+    const idPersonne = resultPersonne.insertId;
+    
+    // Insérer dans la table EMPLOYE
+    const [resultEmploye] = await pool.query(`
+        INSERT INTO EMPLOYE (id_personne, date_embauche, mot_de_passe, id_service)
+        VALUES (?, ?, ?, ?);
+    `, [idPersonne, dateEmbauche, motDePasse, idService]);
+    
+    const idEmploye = resultEmploye.insertId;
+    
+    // Insérer dans la table MEDECIN
+    const [resultMedecin] = await pool.query(`
+        INSERT INTO MEDECIN (id_employe, specialite)
+        VALUES (?, ?);
+    `, [idEmploye, specialite]);
+    
+    console.log("Médecin ajouté avec succès !");
+    console.log("ID Personne:", idPersonne);
+    console.log("ID Employé:", idEmploye);
+    console.log("ID Médecin:", resultMedecin.insertId);
+    
+    return resultMedecin;
+    
 
-//const medecins = await getMedecins();
-//console.log(medecin);
+}
+//test de creation medecin 
+//const createmed = await addMedecin('testnom333', 'testprenomtest', 'testadresse', 'testtelephone', 'testemail','2025-04-01', 'testmotDePasse', '1', 'testspecialite');
+//console.log(createmed);
+
+//exemple le medecin qui a l' id 2
+//const getmedecin = await getMedecinById(2); 
+//console.log(getmedecin);
+
+// afficher tous les medecins
+const medecins = await getMedecins();
+console.log(medecins);
