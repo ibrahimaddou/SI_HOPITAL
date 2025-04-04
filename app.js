@@ -1,10 +1,19 @@
 import express from 'express'
 import { getMedecinById,getMedecins,addMedecin } from './configMySql/database.js'
-
+import cors from 'cors'
 //console.log('DB_USER:', process.env.DB_USER); 
 
 const app = express()
+const PORT = 3002;
+
+app.use(cors());
 app.use(express.json())
+
+//exemple de route vers vuejs envoie des données des medecins au front
+app.get('/api/data',(req, res) => {
+    res.json({message:'Données du backend'});
+})
+
 
 app.get("/medecins", async (req,res)=>{
     const medecins = await getMedecins()
@@ -30,7 +39,7 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!')
 })
 
-app.listen(3002, () => {
-    console.log('server is running on port 3002')
+app.listen(PORT, () => {
+    console.log(`Serveur démarré sur le port ${PORT}`)
 }) 
   
