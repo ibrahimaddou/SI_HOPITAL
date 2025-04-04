@@ -1,7 +1,7 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <DataFetcher msg="Welcome to Your Vue.js App"/>
-  <ListeMedecins />
+  <ListeMedecins msg="medecins" />
 </template>
 
 <script>

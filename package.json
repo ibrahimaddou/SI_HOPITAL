@@ -4,7 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npx nodemon app.js"
+    "start": "npx nodemon app.js",
+    "serve": "cd ./frontend && vue-cli-service serve",
+    "dev": "concurrently \"npm run serve\" \"npm run start\""
   },
   "keywords": [],
   "author": "",
@@ -19,6 +21,7 @@
     "mysql2": "^3.14.0"
   },
   "devDependencies": {
+    "concurrently": "^9.1.2",
     "nodemon": "^3.1.9"
   }
 }
