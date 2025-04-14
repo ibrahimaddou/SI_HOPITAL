@@ -1,6 +1,6 @@
 <template>
   <div class="container mx-auto p-4">
-    <h2>Liste des Médecins</h2>
+
 
     <!-- Bouton pour charger les médecins -->
     <button @click="chargerMedecins">Charger les médecins</button>

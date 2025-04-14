@@ -7,7 +7,10 @@
     </nav>
     
     <main class="container mx-auto mt-4">
-      <ListeMedecins />
+      <ListeMedecins  />
+     <AjouterMedecin 
+      
+     /> 
     </main>
     
     
@@ -21,12 +24,14 @@
 
 <script>
 //import DataFetcher from './components/DataFetcher.vue'
+import AjouterMedecin from './components/AjouterMedecin.vue';
 import ListeMedecins from './components/ListeMedecins.vue'
 
 export default {
   name: 'App',
   components: { 
-    ListeMedecins
+    ListeMedecins,
+    AjouterMedecin
   }
 }
 </script>
