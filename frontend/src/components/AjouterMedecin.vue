@@ -78,7 +78,8 @@
       <div>
         <label class="block text-sm font-medium text-gray-700">Service</label>
         <select 
-          v-model="nouveauMedecin.idService" 
+          v-model="selectedService" 
+          @change="updateSpecialite"
           required 
           class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
         >
@@ -87,18 +88,18 @@
           <option value="2">Pédiatrie</option>
           <option value="3">Neurologie</option>
           <option value="4">Radiologie</option>
-          <!-- Ajoutez d'autres services selon votre base de données -->
         </select>
       </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Spécialité</label>
-            <input 
-              v-model="nouveauMedecin.specialite" 
-              type="text" 
-              required 
-              class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
-            >
-          </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Spécialité</label>
+        <input 
+          v-model="nouveauMedecin.specialite" 
+          type="text" 
+          readonly
+          required 
+          class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border bg-gray-100"
+        >
+      </div>
           <button 
             type="submit" 
             class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded"
@@ -138,6 +139,27 @@
       }
     },
     methods: {
+        updateSpecialite() {
+      this.nouveauMedecin.idService = this.selectedService;
+      
+      // Définir la spécialité en fonction du service sélectionné
+      switch(this.selectedService) {
+        case '1':
+          this.nouveauMedecin.specialite = 'Cardiologue';
+          break;
+        case '2':
+          this.nouveauMedecin.specialite = 'Pédiatre';
+          break;
+        case '3':
+          this.nouveauMedecin.specialite = 'Neurologue';
+          break;
+        case '4':
+          this.nouveauMedecin.specialite = 'Radiologue';
+          break;
+        default:
+          this.nouveauMedecin.specialite = '';
+      }
+    },
       ajouterMedecin() {
         // Réinitialiser le message
         this.message = '';
@@ -153,12 +175,10 @@
         return;
       }
         
-        // Envoyer les données à l'API
         axios.post('http://localhost:3002/medecins', this.nouveauMedecin)
-          .then(() => { // Suppression du paramètre 'response' non utilisé
+          .then(() => { 
             this.message = "Médecin ajouté avec succès";
             
-            // Vider le formulaire
             this.nouveauMedecin = {
               nom: '',
               prenom: '',
@@ -171,10 +191,8 @@
             specialite: ''
             };
             
-            // Masquer automatiquement le formulaire après ajout réussi (optionnel)
             this.afficherFormulaire = false;
             
-            // Émettre un événement pour informer le parent qu'un médecin a été ajouté
             this.$emit('medecin-ajoute');
           })
           .catch(error => {
