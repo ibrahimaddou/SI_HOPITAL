@@ -19,54 +19,82 @@ const pool = mysql.createPool({
 }).promise()  //promise pour avoir la possibilité d'utliser async
 
 export async function getMedecins(){
-    const [rows]= await pool.query("select personne.id_personne, personne.nom, personne.prenom , medecin.specialite from medecin, employe , personne where medecin.id_employe=employe.id_employe and employe.id_personne =personne.id_personne;")
+    //const [rows]= await pool.query("select personne.id_personne, personne.nom, personne.prenom , medecin.specialite from medecin, employe , personne where medecin.id_employe=employe.id_employe and employe.id_personne =personne.id_personne;")
+    const [rows]= await pool.query(`SELECT 
+    p.id_personne,
+    p.nom,
+    p.prenom,
+    p.date_naissance,
+    p.adresse,
+    p.telephone,
+    p.email,
+    per.date_embauche,
+    per.id_service,
+    s.nom AS nom_service,
+    m.specialite
+FROM 
+    Personne p
+JOIN 
+    Personnel per ON p.id_personne = per.id_personnel
+JOIN 
+    Medecin m ON per.id_personnel = m.id_medecin
+LEFT JOIN
+    Service s ON per.id_service = s.id_service
+WHERE 
+    p.type_personne = 'Personnel'
+    AND per.type_personnel = 'Médecin'
+ORDER BY 
+    p.nom, p.prenom;`)
     return rows;
 }
 
 export async function getMedecinById(id){ // pour afficher les infos de medicin avec un son id 
-    const [rows]= await pool.query(`
-        select medecin.id_medecin,personne.id_personne, personne.nom, personne.prenom , medecin.specialite 
-        from medecin, employe , personne 
-        where medecin.id_medecin =?
-        and medecin.id_employe=employe.id_employe 
-        and employe.id_personne =personne.id_personne;`,[id]  
-         // eviter de l'injecter dans la requete avec  ${id} pour des raisons de security SQL injection
-    );
+    const [rows] = await pool.query(`
+        SELECT 
+            medecin.id_medecin,
+            personne.id_personne, 
+            personne.nom, 
+            personne.prenom, 
+            medecin.specialite 
+        FROM 
+            Medecin, 
+            Personnel, 
+            Personne 
+        WHERE 
+            medecin.id_medecin = ?
+            AND medecin.id_medecin = Personnel.id_personnel 
+            AND Personnel.id_personnel = personne.id_personne
+    `, [id]);
     return rows[0];
 }
 
 // creer une personne   
-export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite){
-    // Insérer dans la table PERSONNE
+export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite) {
+    // Insérer dans la table Personne
     const [resultPersonne] = await pool.query(`
-        INSERT INTO PERSONNE (nom, prenom, adresse, telephone, email) 
-        VALUES (?, ?, ?, ?, ?);
+        INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
+        VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
     `, [nom, prenom, adresse, telephone, email]);
     
     const idPersonne = resultPersonne.insertId;
     
-    // Insérer dans la table EMPLOYE
-    const [resultEmploye] = await pool.query(`
-        INSERT INTO EMPLOYE (id_personne, date_embauche, mot_de_passe, id_service)
-        VALUES (?, ?, ?, ?);
-    `, [idPersonne, dateEmbauche, motDePasse, idService]);
+    // Insérer dans la table Personnel
+    await pool.query(`
+        INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
+        VALUES (?, ?, 'Médecin', ?);
+    `, [idPersonne, dateEmbauche, idService]);
     
-    const idEmploye = resultEmploye.insertId;
-    
-    // Insérer dans la table MEDECIN
+    // Insérer dans la table Medecin
     const [resultMedecin] = await pool.query(`
-        INSERT INTO MEDECIN (id_employe, specialite)
-        VALUES (?, ?);
-    `, [idEmploye, specialite]);
+        INSERT INTO Medecin (id_medecin, specialite, mot_de_passe)
+        VALUES (?, ?, ?);
+    `, [idPersonne, specialite, motDePasse]);
     
     console.log("Médecin ajouté avec succès !");
     console.log("ID Personne:", idPersonne);
-    console.log("ID Employé:", idEmploye);
-    console.log("ID Médecin:", resultMedecin.insertId);
+    console.log("ID Médecin:", idPersonne);
     
     return resultMedecin;
-    
-
 }
 //test de creation medecin 
 //const createmed = await addMedecin('testnom333', 'testprenomtest', 'testadresse', 'testtelephone', 'testemail','2025-04-01', 'testmotDePasse', '1', 'testspecialite');
