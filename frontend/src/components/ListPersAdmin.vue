@@ -1,7 +1,9 @@
 <template>
   <div class="container mx-auto p-4">
-    <!-- Bouton pour charger les médecins -->
-    <button @click="chargerMedecins">Charger les médecins</button>
+    <!-- Bouton pour charger le personnel administratif -->
+    <button @click="chargerPersonnelAdmin">
+      Charger le personnel administratif
+    </button>
 
     <!-- Indicateur de chargement -->
     <div v-if="chargement">Chargement en cours...</div>
@@ -9,8 +11,8 @@
     <!-- Message d'erreur -->
     <div v-if="erreur" class="erreur">{{ erreur }}</div>
 
-    <!-- Liste des médecins (visible uniquement après chargement) -->
-    <div v-if="!chargement && !erreur && medecins.length > 0">
+    <!-- Liste du personnel administratif (visible uniquement après chargement) -->
+    <div v-if="!chargement && !erreur && personnelAdmin.length > 0">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -32,30 +34,54 @@
             <th
               class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Spécialité
+              Poste
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Date d'embauche
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Responsable
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Service
             </th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="(medecin, index) in medecins" :key="index">
+          <tr v-for="(admin, index) in personnelAdmin" :key="index">
             <td class="px-6 py-4 whitespace-nowrap">
-              {{ medecin.id_personne }}
+              {{ admin.id_personne }}
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ medecin.nom }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ medecin.prenom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ admin.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ admin.prenom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ admin.poste }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-              {{ medecin.specialite }}
+              {{ admin.date_embauche }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ admin.est_responsable ? "Oui" : "Non" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ admin.nom_service }}
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Message si aucun médecin trouvé après tentative de chargement -->
+    <!-- Message si aucun personnel administratif trouvé après tentative de chargement -->
     <div
-      v-if="!chargement && !erreur && medecinsCherches && medecins.length === 0"
+      v-if="
+        !chargement && !erreur && adminCherches && personnelAdmin.length === 0
+      "
     >
-      Aucun médecin trouvé.
+      Aucun personnel administratif trouvé.
     </div>
   </div>
 </template>
@@ -66,44 +92,44 @@ import axios from "axios";
 export default {
   data() {
     return {
-      medecins: [],
+      personnelAdmin: [],
       chargement: false,
       erreur: null,
-      medecinsCherches: false, // Indique si une recherche a été effectuée
+      adminCherches: false, // Indique si une recherche a été effectuée
     };
   },
   methods: {
-    chargerMedecins() {
+    chargerPersonnelAdmin() {
       this.chargement = true;
       this.erreur = null;
 
       axios
-        .get("http://localhost:3002/medecins")
+        .get("http://localhost:3002/personnel_administratif") // Assurez-vous que cette route est correcte
         .then((response) => {
           // Vérifiez la structure de votre réponse
-          if (response.data && response.data.medecins) {
-            this.medecins = response.data.medecins;
+          if (response.data && response.data.personnelAdmin) {
+            this.personnelAdmin = response.data.personnelAdmin;
           } else if (Array.isArray(response.data)) {
             // Si la réponse est directement un tableau
-            this.medecins = response.data;
+            this.personnelAdmin = response.data;
           } else {
             this.erreur = "Format de réponse incorrect";
             console.error("Format incorrect:", response.data);
           }
-          this.medecinsCherches = true; // Marquer que la recherche a été effectuée
+          this.adminCherches = true; // Marquer que la recherche a été effectuée
         })
         .catch((error) => {
           this.erreur =
-            "Erreur lors du chargement des médecins: " + error.message;
+            "Erreur lors du chargement du personnel administratif: " +
+            error.message;
           console.error("Erreur:", error);
-          this.medecinsCherches = true;
+          this.adminCherches = true;
         })
         .finally(() => {
           this.chargement = false;
         });
     },
   },
-  // Suppression de la méthode mounted() pour ne pas charger automatiquement
 };
 </script>
 
@@ -111,16 +137,6 @@ export default {
 .erreur {
   color: red;
   margin: 10px 0;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
 }
 
 button {
@@ -132,6 +148,7 @@ button {
   border-radius: 4px;
   cursor: pointer;
 }
+
 button:hover {
   background-color: #45a049;
 }
@@ -150,8 +167,5 @@ td {
 
 thead {
   background-color: #f4f4f4;
-}
-button:hover {
-  background-color: #45a049;
 }
 </style>

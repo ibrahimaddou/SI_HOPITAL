@@ -1,5 +1,5 @@
 import express from 'express'
-import { getMedecinById,getMedecins,addMedecin } from './configMySql/database.js'
+import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage } from './configMySql/database.js'
 import cors from 'cors'
 //console.log('DB_USER:', process.env.DB_USER); 
 
@@ -19,6 +19,24 @@ app.get("/medecins", async (req,res)=>{
     const medecins = await getMedecins()
 
     res.send(medecins)
+})
+app.get("/infirmiers", async (req, res) => {
+    const infirmiers = await getInfirmiers()
+    res.send(infirmiers)
+})
+
+app.get("/personnel_administratif", async (req, res) => {
+    const personnelAdmin = await getAdministratifs()
+    res.send(personnelAdmin)
+})
+app.get("/personnel_nettoyage",async (req, res) => {
+    const personnelNettoyage = await getNettoyage()
+    res.send(personnelNettoyage)
+})
+
+app.get("/patient", async (req, res) => {
+    const patients = await getPatients()
+    res.send(patients)
 })
 app.get("/medecin/:id", async (req,res)=>{
     const id = req.params.id

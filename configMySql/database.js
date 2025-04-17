@@ -96,14 +96,135 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
     
     return resultMedecin;
 }
-//test de creation medecin 
+//test de creation medecin
 //const createmed = await addMedecin('testnom333', 'testprenomtest', 'testadresse', 'testtelephone', 'testemail','2025-04-01', 'testmotDePasse', '1', 'testspecialite');
 //console.log(createmed);
 
 //exemple le medecin qui a l' id 2
-//const getmedecin = await getMedecinById(2); 
+//const getmedecin = await getMedecinById(2);
 //console.log(getmedecin);
 
 // afficher tous les medecins
 //const medecins = await getMedecins();
 //console.log(medecins);
+
+
+//list infirmier
+export async function getInfirmiers() {
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id_personne,
+      p.nom,
+      p.prenom,
+      p.date_naissance,
+      p.adresse,
+      p.telephone,
+      p.email,
+      per.date_embauche,
+      per.id_service,
+      s.nom AS nom_service,
+      i.qualification
+    FROM 
+      Personne p
+    JOIN 
+      Personnel per ON p.id_personne = per.id_personnel
+    JOIN 
+      Infirmier i ON per.id_personnel = i.id_infirmier
+    LEFT JOIN 
+      Service s ON per.id_service = s.id_service
+    WHERE 
+      p.type_personne = 'Personnel' AND per.type_personnel = 'Infirmier'
+    ORDER BY 
+      p.nom, p.prenom;
+  `);
+  return rows;
+}
+
+//personnel administratif
+
+
+export async function getAdministratifs() {
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id_personne,
+      p.nom,
+      p.prenom,
+      p.date_naissance,
+      p.adresse,
+      p.telephone,
+      p.email,
+      per.date_embauche,
+      per.id_service,
+      s.nom AS nom_service,
+      pa.poste,
+      pa.est_responsable
+    FROM 
+      Personne p
+    JOIN 
+      Personnel per ON p.id_personne = per.id_personnel
+    JOIN 
+      Personnel_Administratif pa ON per.id_personnel = pa.id_admin
+    LEFT JOIN 
+      Service s ON per.id_service = s.id_service
+    WHERE 
+      p.type_personne = 'Personnel' AND per.type_personnel = 'Admin'
+    ORDER BY 
+      p.nom, p.prenom;
+  `);
+  return rows;
+}
+
+//list patient
+
+export async function getPatients() {
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id_personne,
+      p.nom,
+      p.prenom,
+      p.date_naissance,
+      p.adresse,
+      p.telephone,
+      p.email,
+      pa.antecedents_medicaux
+    FROM 
+      Personne p
+    JOIN 
+      Patient pa ON p.id_personne = pa.id_patient
+    WHERE 
+      p.type_personne = 'Patient'
+    ORDER BY 
+      p.nom, p.prenom;
+  `);
+  return rows;
+}
+//personnel nettoyage
+
+export async function getNettoyage() {
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id_personne,
+      p.nom,
+      p.prenom,
+      p.date_naissance,
+      p.adresse,
+      p.telephone,
+      p.email,
+      per.date_embauche,
+      per.id_service,
+      s.nom AS nom_service
+    FROM 
+      Personne p
+    JOIN 
+      Personnel per ON p.id_personne = per.id_personnel
+    JOIN 
+      Personnel_Nettoyage pn ON per.id_personnel = pn.id_nettoyage
+    LEFT JOIN 
+      Service s ON per.id_service = s.id_service
+    WHERE 
+      p.type_personne = 'Personnel' AND per.type_personnel = 'Nettoyage'
+    ORDER BY 
+      p.nom, p.prenom;
+  `);
+  return rows;
+}
