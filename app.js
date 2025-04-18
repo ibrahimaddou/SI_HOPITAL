@@ -2,14 +2,40 @@ import express from 'express'
 import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+import mysql from 'mysql2'
+dotenv.config();
 //console.log('DB_USER:', process.env.DB_USER); 
 
 const app = express()
 const PORT = 3002;
+const JWT_SECRET = 'testjwt';
 
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.json());
+
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'hopital_db'
+};
+
+//authentification jwt
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) return res.status(401).json({ message: 'Accès refusé' });
+    
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.status(403).json({ message: 'Token invalide' });
+      req.user = user;
+      next();
+    });
+  };
 
 //exemple de route vers vuejs envoie des données des medecins au front
 app.get('/api/data',(req, res) => {
@@ -54,7 +80,14 @@ app.post("/medecins" , async (req, res) => {
     
 })
 
-
+async function connectDB() {
+    try {
+      return mysql.createConnection(dbConfig).promise();
+    } catch (error) {
+      console.error("Erreur de connexion à la base de données:", error);
+      throw error;
+    }
+  }
 app.post('/login', async (req, res) => {
     try {
         const { username, password, userType } = req.body;
@@ -83,7 +116,9 @@ app.post('/login', async (req, res) => {
             break;
         }
         
-        const [rows] = await connection.execute(`SELECT * FROM ${table} WHERE username = ?`, [username]);
+        const result = await connection.execute(`SELECT * FROM ${table} WHERE username = ?`, [username]);
+        console.log("Résultat de la requête:", result); 
+const rows = result[0]
         await connection.end();
         
         if (rows.length === 0) {
@@ -92,10 +127,29 @@ app.post('/login', async (req, res) => {
         
         const user = rows[0];
     
-    if (password !== user.password) {
+    if (password !== user.mot_de_passe) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }
         
+    // Création du token JWT
+    const token = jwt.sign(
+        { id: user.id, username: user.username, role: userType },
+        JWT_SECRET,
+        { expiresIn: '8h' }
+      );
+
+      res.json({
+        message: 'Connexion réussie',
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: userType,
+          nom: user.nom,
+          prenom: user.prenom,
+          email: user.email
+        }
+      });
         
       } catch (error) {
         console.error('Erreur lors de la connexion:', error);
