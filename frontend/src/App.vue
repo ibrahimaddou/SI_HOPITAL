@@ -7,7 +7,6 @@
     </nav>
     <header>
       <nav class="navbar">
-        <div class="logo">Hôpital SI</div>
         <div class="nav-buttons">
           <button 
             v-if="!isLoggedIn" 
@@ -28,13 +27,8 @@
     </header>
 
     <main class="container mx-auto mt-4">
-      <ListeMedecins />
-      <ListeInfirm />
-      <ListPersAdmin />
+      <router-view />
       <ListPatient />
-      <AjouterMedecin />
-      <ListPersNet />
-      <Login />
     </main>
   </div>
   <footer class="bg-gray-100 p-4 mt-8">
@@ -46,26 +40,19 @@
 
 <script>
 //import DataFetcher from './components/DataFetcher.vue'
-import AjouterMedecin from "./components/AjouterMedecin.vue";
-import ListeInfirm from "./components/ListeInfirm.vue";
-import ListeMedecins from "./components/ListeMedecins.vue";
+
 import ListPatient from "./components/ListPatient.vue";
-import ListPersAdmin from "./components/ListPersAdmin.vue";
-import ListPersNet from "./components/ListPersNet.vue";
-import Login from "./components/Login.vue";
-import router from './router'; 
+
+//import Login from "./components/Login.vue";
+import router from './router/router';
 
 
 export default {
   name: "App",
   components: {
-    ListeMedecins,
-    ListeInfirm,
+    
     ListPatient,
-    ListPersAdmin,
-    ListPersNet,
-    AjouterMedecin,
-    Login,
+    
   },
 
   data() {
@@ -113,5 +100,30 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.login-button, .logout-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.logout-button {
+  background-color: #f44336;
 }
 </style>

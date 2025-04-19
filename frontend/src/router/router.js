@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../components/Login.vue'
+import AdminDashboard from '@/components/AdminDashboard.vue'
 
 
 const routes = [
@@ -12,6 +13,17 @@ const routes = [
     name: 'Login',
     component: Login
   },
+
+  {
+    path: '/',
+    redirect: '/admin/dashboard'
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'Admin Dashboard',
+    component: AdminDashboard
+  },
+
   
 ]
 
