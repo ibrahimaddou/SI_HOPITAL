@@ -3,7 +3,7 @@ import {
   getMedecinById,getMedecins,addMedecin,
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides 
+    getChambresVides, getDossierPatient 
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -99,6 +99,16 @@ app.get("/patient", async (req, res) => {
   const patients = await getPatients()
   res.send(patients)
 })
+
+app.get('/patient/dossier/:idPatient', async (req, res) => {
+  const idPatient = req.params.idPatient;
+  try {
+    const dossier = await getDossierPatient(idPatient);  // Ta fonction pour récupérer les données
+    res.json(dossier);  // Renvoie les données au frontend
+  } catch (error) {
+    res.status(500).send('Erreur lors de la récupération du dossier');
+  }
+});
 
 //Infirmiers
 

@@ -278,6 +278,78 @@ ORDER BY
   return rows;
 }
 
+export async function getDossierPatient(idPatient) {
+  // 1. Antécédents médicaux du patient
+
+  const [antecedents] = await pool.query(`
+    SELECT 
+      nom,
+      prenom,
+      date_naissance,
+      antecedents_medicaux
+    FROM 
+      Patient P , personne PE
+    WHERE 
+      p.id_patient = ?
+      AND PE.id_personne = ?
+  `, [idPatient, idPatient]);
+
+  // 2. Visites du patient
+  const [visites] = await pool.query(`
+    SELECT 
+      v.id_visite,
+      v.id_medecin,
+      v.date_visite,
+      v.examens_pratiques,
+      v.commentaires
+    FROM 
+      visite_medicale v
+    WHERE 
+      v.id_patient = ?
+    ORDER BY 
+      v.date_visite DESC
+  `, [idPatient]);
+
+  // 3. Soins du patient
+  const [soins] = await pool.query(`
+    SELECT 
+      s.id_soin,
+      s.description
+    FROM 
+      soin s
+    INNER JOIN 
+      patient ps ON s.id_patient = ps.id_patient
+    WHERE 
+      ps.id_patient = ?
+  `, [idPatient]);
+
+  // 4. Séjours du patient
+  const [sejours] = await pool.query(`
+    SELECT 
+      sej.id_sejour,
+      sej.id_lit,
+      sej.date_arrivee,
+      sej.date_sortie_previsionnelle,
+      sej.date_sortie_reelle,
+      sej.raison_sejour,
+      sej.id_admin_affectation
+    FROM 
+      sejour sej
+    WHERE 
+      sej.id_patient = ?
+    ORDER BY 
+      sej.date_arrivee DESC
+  `, [idPatient]);
+
+  // Assemblage final
+  return {
+    antecedents: antecedents[0] || null, // Juste un champ
+    visites,
+    soins,
+    sejours
+  };
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);
