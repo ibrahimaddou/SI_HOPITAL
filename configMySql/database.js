@@ -12,15 +12,15 @@ import path from 'path';
 dotenv.config()
 
 const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user:process.env.DB_USER,
-    password:process.env.DB_PASSWORD,
-    database: process.env.DB_NAME || 'hopital'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME || 'hopital'
 }).promise()  //promise pour avoir la possibilité d'utliser async
 
-export async function getMedecins(){
-    //const [rows]= await pool.query("select personne.id_personne, personne.nom, personne.prenom , medecin.specialite from medecin, employe , personne where medecin.id_employe=employe.id_employe and employe.id_personne =personne.id_personne;")
-    const [rows]= await pool.query(`SELECT 
+export async function getMedecins() {
+  //const [rows]= await pool.query("select personne.id_personne, personne.nom, personne.prenom , medecin.specialite from medecin, employe , personne where medecin.id_employe=employe.id_employe and employe.id_personne =personne.id_personne;")
+  const [rows] = await pool.query(`SELECT 
     p.id_personne,
     p.nom,
     p.prenom,
@@ -45,11 +45,11 @@ WHERE
     AND per.type_personnel = 'Médecin'
 ORDER BY 
     p.nom, p.prenom;`)
-    return rows;
+  return rows;
 }
 
-export async function getMedecinById(id){ // pour afficher les infos de medicin avec un son id 
-    const [rows] = await pool.query(`
+export async function getMedecinById(id) { // pour afficher les infos de medicin avec un son id 
+  const [rows] = await pool.query(`
         SELECT 
             medecin.id_medecin,
             personne.id_personne, 
@@ -65,36 +65,36 @@ export async function getMedecinById(id){ // pour afficher les infos de medicin 
             AND medecin.id_medecin = Personnel.id_personnel 
             AND Personnel.id_personnel = personne.id_personne
     `, [id]);
-    return rows[0];
+  return rows[0];
 }
 
 // creer une personne   
 export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite) {
-    // Insérer dans la table Personne
-    const [resultPersonne] = await pool.query(`
+  // Insérer dans la table Personne
+  const [resultPersonne] = await pool.query(`
         INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
         VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
     `, [nom, prenom, adresse, telephone, email]);
-    
-    const idPersonne = resultPersonne.insertId;
-    
-    // Insérer dans la table Personnel
-    await pool.query(`
+
+  const idPersonne = resultPersonne.insertId;
+
+  // Insérer dans la table Personnel
+  await pool.query(`
         INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
         VALUES (?, ?, 'Médecin', ?);
     `, [idPersonne, dateEmbauche, idService]);
-    
-    // Insérer dans la table Medecin
-    const [resultMedecin] = await pool.query(`
+
+  // Insérer dans la table Medecin
+  const [resultMedecin] = await pool.query(`
         INSERT INTO Medecin (id_medecin, specialite, mot_de_passe)
         VALUES (?, ?, ?);
     `, [idPersonne, specialite, motDePasse]);
-    
-    console.log("Médecin ajouté avec succès !");
-    console.log("ID Personne:", idPersonne);
-    console.log("ID Médecin:", idPersonne);
-    
-    return resultMedecin;
+
+  console.log("Médecin ajouté avec succès !");
+  console.log("ID Personne:", idPersonne);
+  console.log("ID Médecin:", idPersonne);
+
+  return resultMedecin;
 }
 //test de creation medecin
 //const createmed = await addMedecin('testnom333', 'testprenomtest', 'testadresse', 'testtelephone', 'testemail','2025-04-01', 'testmotDePasse', '1', 'testspecialite');
@@ -226,5 +226,30 @@ export async function getNettoyage() {
     ORDER BY 
       p.nom, p.prenom;
   `);
+  return rows;
+}
+
+
+export async function getLitsDisponibles() {
+  const [rows] = await pool.query(`
+    SELECT 
+        l.id_lit,
+        l.numero AS numero_lit,
+        c.numero AS numero_chambre,
+        c.etage,
+        s.nom AS service
+    FROM 
+        Lit l
+        INNER JOIN Chambre c ON l.id_chambre = c.id_chambre
+        INNER JOIN Service s ON c.id_service = s.id_service
+    WHERE 
+        l.id_lit NOT IN (
+            SELECT sej.id_lit 
+            FROM Sejour sej 
+            WHERE sej.date_sortie_reelle IS NULL
+        )
+    ORDER BY 
+        s.nom, c.etage, c.numero, l.numero;
+    `);
   return rows;
 }

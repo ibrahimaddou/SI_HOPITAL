@@ -1,10 +1,12 @@
 import express from 'express'
-import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage } from './configMySql/database.js'
+import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage,getLitsDisponibles } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import mysql from 'mysql2'
+
+
 dotenv.config();
 //console.log('DB_USER:', process.env.DB_USER); 
 
@@ -37,12 +39,12 @@ const authenticateToken = (req, res, next) => {
     });
   };
 
-//exemple de route vers vuejs envoie des données des medecins au front
+// route vers vuejs envoie des données des medecins au front
 app.get('/api/data',(req, res) => {
     res.json({message:'Données du backend'});
 })
 
-
+//Admin
 app.get("/medecins", async (req,res)=>{
     const medecins = await getMedecins()
 
@@ -62,10 +64,6 @@ app.get("/personnel_nettoyage",async (req, res) => {
     res.send(personnelNettoyage)
 })
 
-app.get("/patient", async (req, res) => {
-    const patients = await getPatients()
-    res.send(patients)
-})
 app.get("/medecin/:id", async (req,res)=>{
     const id = req.params.id
     const medecin = await getMedecinById(id)
@@ -79,6 +77,21 @@ app.post("/medecins" , async (req, res) => {
     res.status(201).send(medecin)
     
 })
+app.get("/litsDisponibles", async (req,res)=>{
+  const lits = await getLitsDisponibles()
+
+  res.send(lits)
+})
+
+
+//Medecin
+app.get("/patient", async (req, res) => {
+  const patients = await getPatients()
+  res.send(patients)
+})
+
+//Infirmiers
+
 
 async function connectDB() {
     try {
