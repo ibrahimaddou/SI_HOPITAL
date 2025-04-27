@@ -54,25 +54,41 @@ const router = createRouter({
 })
 
 // guard de navigation
-router.beforeEach(async (to, from) => {
-  //si l'utilisateur est authentifié
-  const isAuthenticated = localStorage.getItem('token') !== null
-  const userRole = localStorage.getItem('role')
+router.beforeEach((to) => {
+  // Récupération du token JWT
+  const token = localStorage.getItem('token');
+  const isAuthenticated = !!token;
   
-  // si l'utilisateur n'est pas connecté
+  // Si l'utilisateur n'est pas authentifié
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // redirect vers page accueil
-    return { path: '/accueil', query: { redirect: to.fullPath } }
+    return { path: '/accueil', query: { redirect: to.fullPath } };
   }
   
-  if (to.meta.role && to.meta.role !== userRole) {
-    // le cas ou l' utilisateur n'a pas le bon rôle
-      return { path: '/login' }
-   
+  if (isAuthenticated && to.meta.role) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Vérif de l'expiration du token
+      if (payload.exp && payload.exp < Date.now() / 1000) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        return { path: '/accueil', query: { reason: 'session_expired' } };
+      }
+      
+      // vérification du rôle
+      const userRole = payload.role || localStorage.getItem('role');
+      if (to.meta.role !== userRole) {
+        return { path: '/login', query: { reason: 'unauthorized' } };
+      }
+    } catch (error) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      return { path: '/login', query: { reason: 'invalid_token' } };
+    }
   }
   
-  // si tout est OK
-  return true
-})
+  // Si tout est OK
+  return true;
+});
 
 export default router
