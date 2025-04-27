@@ -445,6 +445,36 @@ export async function ajouterPatient(nom, prenom, dateNaissance, adresse, teleph
   
   return resultPatient;
 }
+
+//ajouter personnel de nettoyage
+export async function ajouterPersonnelNettoyage(
+  nom, 
+  prenom, 
+  adresse, 
+  telephone, 
+  email, 
+  dateEmbauche, 
+  idService
+) {
+  const [resultPersonne] = await pool.query(`
+    INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
+    VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
+  `, [nom, prenom, adresse, telephone, email]);
+
+  const idPersonne = resultPersonne.insertId;
+  await pool.query(`
+    INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
+    VALUES (?, ?, 'Nettoyage', ?);
+  `, [idPersonne, dateEmbauche, idService]);
+
+  const [resultNettoyage] = await pool.query(`
+    INSERT INTO Personnel_Nettoyage (id_nettoyage)
+    VALUES (?);
+  `, [idPersonne]);
+
+  return resultNettoyage;
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

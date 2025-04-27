@@ -4,7 +4,7 @@ import {
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
-    getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif
+    getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,ajouterPersonnelNettoyage
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -50,7 +50,7 @@ app.get('/api/data',(req, res) => {
     res.json({message:'Données du backend'});
 })
 
-//Admin
+//Admin_______________________________________________________________________________________
 app.get("/medecins", async (req,res)=>{
     const medecins = await getMedecins()
 
@@ -65,7 +65,7 @@ app.get("/personnelsAdministratifs", async (req, res) => {
     const personnelAdmin = await getAdministratifs()
     res.send(personnelAdmin)
 })
-app.get("/personnel_nettoyage",async (req, res) => {
+app.get("/personnelsNettoyage",async (req, res) => {
     const personnelNettoyage = await getNettoyage()
     res.send(personnelNettoyage)
 })
@@ -136,8 +136,42 @@ app.post("/personnelsAdministratifs", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout du personnel administratif" });
   }
 });
+app.post("/personnelsNettoyage", async (req, res) => {
+  try {
+    const { 
+      nom, 
+      prenom, 
+      adresse, 
+      telephone, 
+      email, 
+      dateEmbauche, 
+      idService
+    } = req.body;
 
-//Medecin
+    if (!nom || !prenom || !dateEmbauche) {
+      return res.status(400).send({ 
+        error: " nom prénom et date d'embauche sont requis" 
+      });
+    }
+
+    const personnelNettoyage = await ajouterPersonnelNettoyage(
+      nom, 
+      prenom, 
+      adresse || null, 
+      telephone, 
+      email || null, 
+      dateEmbauche, 
+      idService || null
+    );
+
+    res.status(201).send(personnelNettoyage);
+  } catch (error) {
+    console.error("Erreur ajout du personnel de nettoyage! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout du personnel de nettoyage" });
+  }
+});
+
+//Medecin_____________________________________________________________________________________
 app.get("/patients", async (req, res) => {
   const patients = await getPatients()
   res.send(patients)
