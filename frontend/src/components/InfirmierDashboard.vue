@@ -1,6 +1,6 @@
 <template>
     <div class="admin-dashboard">
-      <h1>Tableau de bord Medecin</h1>
+      <h1>Tableau de bord Infirmier</h1>
 
       <main class="container mx-auto mt-4">
 
