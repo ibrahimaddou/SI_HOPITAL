@@ -69,7 +69,7 @@ export async function getMedecinById(id){ // pour afficher les infos de medicin 
 }
 
 // creer une personne   
-export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite) {
+export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, username, idService, specialite) {
     // Insérer dans la table Personne
     const [resultPersonne] = await pool.query(`
         INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
@@ -86,8 +86,8 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
     
     // Insérer dans la table Medecin
     const [resultMedecin] = await pool.query(`
-        INSERT INTO Medecin (id_medecin, specialite, mot_de_passe)
-        VALUES (?, ?, ?);
+        INSERT INTO Medecin (id_medecin, specialite, mot_de_passe, username)
+        VALUES (?, ?, ?, ?);
     `, [idPersonne, specialite, motDePasse]);
     
     console.log("Médecin ajouté avec succès !");
@@ -95,6 +95,34 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
     console.log("ID Médecin:", idPersonne);
     
     return resultMedecin;
+}
+
+export async function addInfirmier(nom, prenom, adresse, telephone, email, dateEmbauche, mot_de_passe, username, idService, qualification) {
+    // Insérer dans la table Personne
+    const [resultPersonne] = await pool.query(`
+        INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
+        VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
+    `, [nom, prenom, adresse, telephone, email]);
+    
+    const idPersonne = resultPersonne.insertId;
+    
+    // Insérer dans la table Personnel
+    await pool.query(`
+        INSERT INTO Personnel (id_personnel, date_embauche, type_personnel,  id_service)
+        VALUES (?, ?, 'Infirmier', ?);
+    `, [idPersonne, dateEmbauche, idService]);
+    
+    // Insérer dans la table Infirmier
+    const [resultInfirmier] = await pool.query(`
+        INSERT INTO infirmier (id_infirmier, qualification, mot_de_passe, username)
+        VALUES (?, ?, ?, ?);
+    `, [idPersonne, qualification, mot_de_passe, username]);
+    
+    console.log("Infirmier ajouté avec succès !");
+    console.log("ID Personne:", idPersonne);
+    console.log("ID Infirmier:", idPersonne);
+    
+    return resultInfirmier;
 }
 //test de creation medecin
 //const createmed = await addMedecin('testnom333', 'testprenomtest', 'testadresse', 'testtelephone', 'testemail','2025-04-01', 'testmotDePasse', '1', 'testspecialite');

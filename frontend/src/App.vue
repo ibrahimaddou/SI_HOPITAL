@@ -13,6 +13,7 @@
       <ListPatient />
       <AjouterMedecin />
       <ListPersNet />
+      <AjouterInfi />
     </main>
   </div>
   <footer class="bg-gray-100 p-4 mt-8">
@@ -24,6 +25,8 @@
 
 <script>
 //import DataFetcher from './components/DataFetcher.vue'
+import AjouterInfi from "./components/AjouterInfi.vue";
+
 import AjouterMedecin from "./components/AjouterMedecin.vue";
 import ListeInfirm from "./components/ListeInfirm.vue";
 import ListeMedecins from "./components/ListeMedecins.vue";
@@ -40,6 +43,7 @@ export default {
     ListPersAdmin,
     ListPersNet,
     AjouterMedecin,
+    AjouterInfi,
   },
 };
 </script>

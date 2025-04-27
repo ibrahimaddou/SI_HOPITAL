@@ -1,5 +1,5 @@
 import express from 'express'
-import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage } from './configMySql/database.js'
+import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage, addInfirmier } from './configMySql/database.js'
 import cors from 'cors'
 //console.log('DB_USER:', process.env.DB_USER); 
 
@@ -46,9 +46,15 @@ app.get("/medecin/:id", async (req,res)=>{
 })
 
 app.post("/medecins" , async (req, res) => {
-    const{nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite}=req.body
-    const medecin = await addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, idService, specialite)
+    const{nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, username, idService, specialite}=req.body
+    const medecin = await addMedecin(nom, prenom, adresse, telephone, email, dateEmbauche, motDePasse, username, idService, specialite)
     res.status(201).send(medecin)
+    
+})
+app.post("/infirmier" , async (req, res) => {
+    const{nom, prenom, adresse, telephone, email, dateEmbauche,  mot_de_passe, username, idService, qualification }=req.body
+    const infirmier = await addInfirmier(nom, prenom, adresse, telephone, email,  dateEmbauche, mot_de_passe, username, idService, qualification)
+    res.status(201).send(infirmier)
     
 })
 

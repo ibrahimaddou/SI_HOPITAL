@@ -11,13 +11,13 @@
       }}
     </button>
 
-    <!-- Formulaire d'ajout de médecin -->
+    <!-- Formulaire d'ajout d'infirmier -->
     <div v-if="afficherFormulaire" class="transition-all duration-300">
-      <form @submit.prevent="ajouterMedecin" class="space-y-3">
+      <form @submit.prevent="ajouterInfirmier" class="space-y-3">
         <div>
           <label class="block text-sm font-medium text-gray-700">Nom</label>
           <input
-            v-model="nouveauMedecin.nom"
+            v-model="nouvelInfirmier.nom"
             type="text"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -26,7 +26,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Prénom</label>
           <input
-            v-model="nouveauMedecin.prenom"
+            v-model="nouvelInfirmier.prenom"
             type="text"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -35,7 +35,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Adresse</label>
           <input
-            v-model="nouveauMedecin.adresse"
+            v-model="nouvelInfirmier.adresse"
             type="text"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -46,7 +46,7 @@
             >Téléphone</label
           >
           <input
-            v-model="nouveauMedecin.telephone"
+            v-model="nouvelInfirmier.telephone"
             type="tel"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -55,7 +55,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Email</label>
           <input
-            v-model="nouveauMedecin.email"
+            v-model="nouvelInfirmier.email"
             type="email"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -66,7 +66,7 @@
             >Date d'embauche</label
           >
           <input
-            v-model="nouveauMedecin.dateEmbauche"
+            v-model="nouvelInfirmier.dateEmbauche"
             type="date"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -77,7 +77,7 @@
             >username</label
           >
           <input
-            v-model="nouveauMedecin.username"
+            v-model="nouvelInfirmier.username"
             type="text"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
@@ -85,11 +85,11 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700"
-            >Mot de passe</label
+            >mot de passe</label
           >
           <input
-            v-model="nouveauMedecin.motDePasse"
-            type="password"
+            v-model="nouvelInfirmier.mot_de_passe"
+            type="text"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
           />
@@ -97,8 +97,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700">Service</label>
           <select
-            v-model="selectedService"
-            @change="updateSpecialite"
+            v-model="nouvelInfirmier.idService"
             required
             class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
           >
@@ -111,15 +110,19 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700"
-            >Spécialité</label
+            >Qualification</label
           >
-          <input
-            v-model="nouveauMedecin.specialite"
-            type="text"
-            readonly
+          <select
+            v-model="nouvelInfirmier.qualification"
             required
-            class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border bg-gray-100"
-          />
+            class="mt-1 block w-full rounded border-gray-300 shadow-sm p-2 border"
+          >
+            <option value="">Sélectionner une qualification</option>
+            <option value="IDE">Infirmier Diplômé d'État (IDE)</option>
+            <option value="IBODE">Infirmier de Bloc Opératoire (IBODE)</option>
+            <option value="IADE">Infirmier Anesthésiste (IADE)</option>
+            <option value="Puéricultrice">Puéricultrice</option>
+          </select>
         </div>
         <button
           type="submit"
@@ -148,7 +151,7 @@ export default {
   data() {
     return {
       afficherFormulaire: false,
-      nouveauMedecin: {
+      nouvelInfirmier: {
         nom: "",
         prenom: "",
         adresse: "",
@@ -156,42 +159,21 @@ export default {
         email: "",
         dateEmbauche: new Date().toISOString().split("T")[0],
         username: "",
-        motDePasse: "",
+        mot_de_passe: "",
         idService: "",
-        specialite: "",
+        qualification: "",
       },
       message: "",
       erreur: false,
     };
   },
   methods: {
-    updateSpecialite() {
-      this.nouveauMedecin.idService = this.selectedService;
-
-      // Définir la spécialité en fonction du service sélectionné
-      switch (this.selectedService) {
-        case "1":
-          this.nouveauMedecin.specialite = "Cardiologue";
-          break;
-        case "2":
-          this.nouveauMedecin.specialite = "Pédiatre";
-          break;
-        case "3":
-          this.nouveauMedecin.specialite = "Neurologue";
-          break;
-        case "4":
-          this.nouveauMedecin.specialite = "Radiologue";
-          break;
-        default:
-          this.nouveauMedecin.specialite = "";
-      }
-    },
-    ajouterMedecin() {
+    ajouterInfirmier() {
       // Réinitialiser le message
       this.message = "";
       this.erreur = false;
 
-      // Vérification des champs (au cas où la validation HTML ne fonctionnerait pas)
+      // Vérification des champs
       const champsRequis = [
         "nom",
         "prenom",
@@ -199,12 +181,13 @@ export default {
         "telephone",
         "email",
         "dateEmbauche",
-        "motDePasse",
+        "username",
+        "mot_de_passe",
         "idService",
-        "specialite",
+        "qualification",
       ];
       const champManquant = champsRequis.find(
-        (champ) => !this.nouveauMedecin[champ]
+        (champ) => !this.nouvelInfirmier[champ]
       );
 
       if (champManquant) {
@@ -214,11 +197,11 @@ export default {
       }
 
       axios
-        .post("http://localhost:3002/medecins", this.nouveauMedecin)
+        .post("http://localhost:3002/infirmier", this.nouvelInfirmier)
         .then(() => {
-          this.message = "Médecin ajouté avec succès";
+          this.message = "Infirmier ajouté avec succès";
 
-          this.nouveauMedecin = {
+          this.nouvelInfirmier = {
             nom: "",
             prenom: "",
             adresse: "",
@@ -226,17 +209,18 @@ export default {
             email: "",
             dateEmbauche: new Date().toISOString().split("T")[0],
             username: "",
-            motDePasse: "",
+            mot_de_passe: "",
             idService: "",
-            specialite: "",
+            qualification: "",
           };
 
           this.afficherFormulaire = false;
 
-          this.$emit("medecin-ajoute");
+          this.$emit("infirmier-ajoute");
         })
         .catch((error) => {
-          this.message = "Erreur lors de l'ajout du médecin: " + error.message;
+          this.message =
+            "Erreur lors de l'ajout de l'infirmier: " + error.message;
           this.erreur = true;
           console.error("Erreur:", error);
         });
@@ -246,9 +230,6 @@ export default {
 </script>
 
 <style scoped>
-button {
-  cursor: pointer;
-}
 button {
   margin-top: 15px;
   padding: 8px 16px;
