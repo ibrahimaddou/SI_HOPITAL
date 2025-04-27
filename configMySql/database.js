@@ -277,6 +277,32 @@ ORDER BY
     `);
   return rows;
 }
+export async function getChambresNonNettoyees() {
+  const [rows] = await pool.query(`
+    SELECT 
+    c.id_chambre,
+    c.numero AS numero_chambre,
+    c.etage,
+    s.nom AS service,
+    MAX(n.date_nettoyage) AS dernier_nettoyage,
+    MAX(sej.date_sortie_reelle) AS derniere_sortie_patient
+FROM 
+    Chambre c
+    INNER JOIN Service s ON c.id_service = s.id_service
+    LEFT JOIN Nettoyage n ON c.id_chambre = n.id_chambre
+    LEFT JOIN Lit l ON c.id_chambre = l.id_chambre
+    LEFT JOIN Sejour sej ON l.id_lit = sej.id_lit AND sej.date_sortie_reelle IS NOT NULL
+GROUP BY 
+    c.id_chambre, c.numero, c.etage, s.nom
+HAVING 
+    (MAX(n.date_nettoyage) IS NULL) OR 
+    (MAX(sej.date_sortie_reelle) > MAX(n.date_nettoyage))
+ORDER BY 
+    CASE WHEN MAX(n.date_nettoyage) IS NULL THEN 0 ELSE 1 END,
+    MAX(n.date_nettoyage) ASC;
+    `);
+  return rows;
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

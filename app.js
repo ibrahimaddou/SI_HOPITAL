@@ -3,7 +3,7 @@ import {
   getMedecinById,getMedecins,addMedecin,
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides 
+    getChambresVides,getChambresNonNettoyees
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -102,6 +102,12 @@ app.get("/patient", async (req, res) => {
 
 //Infirmiers
 
+
+//Personnel net
+app.get("/chambresNonNettoyees", async (req, res) => {
+  const chambres = await getChambresNonNettoyees()
+  res.send(chambres)
+})
 
 async function connectDB() {
     try {
