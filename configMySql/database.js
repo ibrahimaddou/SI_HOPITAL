@@ -350,6 +350,31 @@ export async function getDossierPatient(idPatient) {
   };
 }
 
+export async function getMedic_patient (idPatient) {
+  const [rows] = await pool.query(`
+    SELECT 
+          s.id_soin,
+          s.description AS soin_description,
+          m.id_medicament,
+          m.nom AS nom_medicament,
+          m.description AS description_medicament,
+          m.dosage,
+          ms.quantite
+       FROM 
+          soin s
+       JOIN 
+          medicament_soin ms ON s.id_soin = ms.id_soin
+       JOIN 
+          medicament m ON ms.id_medicament = m.id_medicament
+       WHERE 
+          s.id_patient = ?
+       ORDER BY 
+          s.id_soin ASC`,
+    [idPatient]
+  );
+  return rows;
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

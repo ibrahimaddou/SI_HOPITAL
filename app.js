@@ -3,7 +3,7 @@ import {
   getMedecinById,getMedecins,addMedecin,
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides, getDossierPatient 
+    getChambresVides, getDossierPatient, getMedic_patient 
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -109,6 +109,20 @@ app.get('/patient/dossier/:idPatient', async (req, res) => {
     res.status(500).send('Erreur lors de la récupération du dossier');
   }
 });
+
+// Récupérer les médicaments associés aux soins d'un patient
+app.get('/afficherMedicamentsPatient/:idPatient', async (req, res) => {
+  const idPatient = req.params.idPatient;
+
+  try {
+    const medicaments = await getMedic_patient(idPatient);  // ta fonction SQL existante
+    res.send(medicaments); // envoie direct au frontend
+  } catch (error) {
+    console.error('Erreur lors de la récupération des médicaments du patient :', error);
+    res.status(500).send('Erreur lors de la récupération des médicaments');
+  }
+});
+
 
 //Infirmiers
 

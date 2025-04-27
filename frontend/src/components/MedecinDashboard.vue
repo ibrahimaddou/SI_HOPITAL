@@ -4,19 +4,22 @@
 
     <main class="container mx-auto mt-4">
       <ListPatient />
-      <dossierPatient />
+      <DossierPatient />
+      <MedicamentPatient />
     </main>
   </div>
 </template>
 <script>
 import ListPatient from "./Medecin/ListPatient.vue";
 import DossierPatient from "./Medecin/DossierPatient.vue";
+import MedicamentPatient from "./Medecin/MedicamentPatient.vue";
 
 export default {
   name: "App",
   components: {
     ListPatient,
     DossierPatient,
+    MedicamentPatient,
   },
 };
 </script>
