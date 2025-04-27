@@ -80,7 +80,6 @@ export default {
       axios
         .get("http://localhost:3002/medecins")
         .then((response) => {
-          // Vérifiez la structure de votre réponse
           if (response.data && response.data.medecins) {
             this.medecins = response.data.medecins;
           } else if (Array.isArray(response.data)) {

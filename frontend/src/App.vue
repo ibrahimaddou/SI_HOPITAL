@@ -27,8 +27,12 @@
     </header>
 
     <main class="container mx-auto mt-4">
-      <router-view />
-      <ListPatient />
+     
+      <router-view v-if="showLoginForm || isLoggedIn" />
+      <div v-else class="welcome-message">
+        <h2 class="text-2xl font-bold mb-4">Bienvenue au Système d'Information Hospitalier</h2>
+        <p>Veuillez cliquer sur "Se connecter" pour accéder au système</p>
+      </div>
     </main>
   </div>
   <footer class="bg-gray-100 p-4 mt-8">
@@ -41,7 +45,7 @@
 <script>
 //import DataFetcher from './components/DataFetcher.vue'
 
-import ListPatient from "./components/ListPatient.vue";
+//import ListPatient from "./components/ListPatient.vue";
 
 //import Login from "./components/Login.vue";
 import router from './router/router';
@@ -50,14 +54,15 @@ import router from './router/router';
 export default {
   name: "App",
   components: {
-    
-    ListPatient,
+   
+    //ListPatient,
     
   },
 
   data() {
     return {
-      isLoggedIn: false
+      isLoggedIn: false,
+      showLoginForm: false  // pour contrôler l'affichage du router-view
     };
   },
   created() {
@@ -72,15 +77,17 @@ export default {
     },
     goToLogin() {
       router.push('/login');
+      this.showLoginForm = true;
     },
     logout() {
       // Supprimer le token et les infos de l'user
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       this.isLoggedIn = false;
+      this.showLoginForm = false;
       
       // Rediriger
-      router.push('/login');
+      router.push('/Accueil');
     }
   },
   watch: {
