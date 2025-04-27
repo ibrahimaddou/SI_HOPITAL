@@ -333,6 +333,55 @@ ORDER BY
     `);
   return rows;
 }
+export async function getEtatOccupationService(idService, date) {
+  const [rows] = await pool.query(`
+    SELECT 
+      c.id_chambre,
+      c.numero AS numero_chambre,
+      c.etage,
+      c.capacite,
+      COUNT(l.id_lit) AS total_lits,
+      SUM(CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM Sejour sej 
+              WHERE sej.id_lit = l.id_lit 
+              AND ? BETWEEN sej.date_arrivee AND IFNULL(sej.date_sortie_reelle, '9999-12-31')
+          ) THEN 1 
+          ELSE 0 
+      END) AS lits_occupes,
+      (COUNT(l.id_lit) - SUM(CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM Sejour sej 
+              WHERE sej.id_lit = l.id_lit 
+              AND ? BETWEEN sej.date_arrivee AND IFNULL(sej.date_sortie_reelle, '9999-12-31')
+          ) THEN 1 
+          ELSE 0 
+      END)) AS lits_disponibles,
+      ROUND((SUM(CASE 
+          WHEN EXISTS (
+              SELECT 1 
+              FROM Sejour sej 
+              WHERE sej.id_lit = l.id_lit 
+              AND ? BETWEEN sej.date_arrivee AND IFNULL(sej.date_sortie_reelle, '9999-12-31')
+          ) THEN 1 
+          ELSE 0 
+      END) / COUNT(l.id_lit)) * 100, 2) AS pourcentage_occupation
+    FROM 
+      Chambre c
+      INNER JOIN Service s ON c.id_service = s.id_service
+      LEFT JOIN Lit l ON c.id_chambre = l.id_chambre
+    WHERE 
+      s.id_service = ?
+    GROUP BY 
+      c.id_chambre, c.numero, c.etage, c.capacite
+    ORDER BY 
+      c.etage, c.numero
+  `, [date, date, date, idService]);
+  
+  return rows;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

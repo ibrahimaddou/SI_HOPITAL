@@ -3,7 +3,8 @@ import {
   getMedecinById,getMedecins,addMedecin,
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie
+    getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
+    getEtatOccupationService
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -97,6 +98,22 @@ app.get("/patientsRetardSortie", async (req,res)=>{
 
   res.send(patients)
 })
+app.get("/etatOccupationService/:idService/:date", async (req, res) => {
+  try {
+    const idService = req.params.idService;
+    const date = req.params.date;
+    if (!idService || !date) {
+      return res.status(400).send({ error: "ID du service et  date sont requis" });
+    }
+    
+    const service = await getEtatOccupationService(idService, date);
+    
+    res.status(200).send(service);
+  } catch (error) {
+    console.error("Erreur ! récupération de l'état d'occupation:", error);
+    res.status(500).send({ error: "Erreur serveur ! etatoccup" });
+  }
+});
 
 //Medecin
 app.get("/patient", async (req, res) => {
