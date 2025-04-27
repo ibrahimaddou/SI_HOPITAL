@@ -382,6 +382,23 @@ export async function getEtatOccupationService(idService, date) {
   
   return rows;
 }
+
+//ajouter patient
+export async function ajouterPatient(nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux) {
+  const [resultPersonne] = await pool.query(`
+        INSERT INTO Personne (nom, prenom, date_naissance, adresse, telephone, email, type_personne) 
+        VALUES (?, ?, ?, ?, ?, ?, 'Patient');
+    `, [nom, prenom, dateNaissance, adresse, telephone, email]);
+  
+  const idPersonne = resultPersonne.insertId;
+
+  const [resultPatient] = await pool.query(`
+        INSERT INTO Patient (id_patient, antecedents_medicaux)
+        VALUES (?, ?);
+    `, [idPersonne, antecedentsMedicaux]);
+  
+  return resultPatient;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

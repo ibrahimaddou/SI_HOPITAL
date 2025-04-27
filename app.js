@@ -4,7 +4,7 @@ import {
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
-    getEtatOccupationService
+    getEtatOccupationService,ajouterPatient
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -115,11 +115,28 @@ app.get("/etatOccupationService/:idService/:date", async (req, res) => {
   }
 });
 
+
 //Medecin
-app.get("/patient", async (req, res) => {
+app.get("/patients", async (req, res) => {
   const patients = await getPatients()
   res.send(patients)
 })
+app.post("/patients", async (req, res) => {
+  try {
+    const { nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux } = req.body;
+   
+    if (!nom || !prenom || !dateNaissance) {
+      return res.status(400).send({ error: "Le nom, prénom et date de naissance sont obligatoires" });
+    }
+    
+    const patient = await ajouterPatient(nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux);
+    
+    res.status(201).send(patient);
+  } catch (error) {
+    console.error("Erreur ajout du patient! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout du patient" });
+  }
+});
 
 //Infirmiers
 
