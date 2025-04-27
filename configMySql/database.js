@@ -253,3 +253,33 @@ export async function getLitsDisponibles() {
     `);
   return rows;
 }
+export async function getChambresVides() {
+  const [rows] = await pool.query(`
+    SELECT 
+    c.id_chambre,
+    c.numero AS numero_chambre,
+    c.etage,
+    c.capacite,
+    s.nom AS service
+FROM 
+    Chambre c
+    INNER JOIN Service s ON c.id_service = s.id_service
+WHERE 
+    NOT EXISTS (
+        SELECT 1
+        FROM Lit l
+        INNER JOIN Sejour sej ON l.id_lit = sej.id_lit
+        WHERE l.id_chambre = c.id_chambre
+        AND sej.date_sortie_reelle IS NULL
+    )
+ORDER BY 
+    s.nom, c.etage, c.numero;
+    `);
+  return rows;
+}
+
+/*export async function () {
+  const [rows] = await pool.query(`
+    `);
+  return rows;
+}*/

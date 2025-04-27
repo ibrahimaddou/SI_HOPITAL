@@ -1,5 +1,10 @@
 import express from 'express'
-import { getMedecinById,getMedecins,addMedecin, getInfirmiers, getAdministratifs, getPatients, getNettoyage,getLitsDisponibles } from './configMySql/database.js'
+import { 
+  getMedecinById,getMedecins,addMedecin,
+   getInfirmiers, getAdministratifs,
+    getPatients, getNettoyage,getLitsDisponibles,
+    getChambresVides 
+  } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
@@ -81,6 +86,11 @@ app.get("/litsDisponibles", async (req,res)=>{
   const lits = await getLitsDisponibles()
 
   res.send(lits)
+})
+app.get("/chambresVides", async (req,res)=>{
+  const chambres = await getChambresVides()
+
+  res.send(chambres)
 })
 
 
