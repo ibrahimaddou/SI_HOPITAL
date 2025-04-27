@@ -4,7 +4,7 @@ import {
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
-    getEtatOccupationService,ajouterPatient
+    getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -61,7 +61,7 @@ app.get("/infirmiers", async (req, res) => {
     res.send(infirmiers)
 })
 
-app.get("/personnel_administratif", async (req, res) => {
+app.get("/personnelsAdministratifs", async (req, res) => {
     const personnelAdmin = await getAdministratifs()
     res.send(personnelAdmin)
 })
@@ -114,7 +114,28 @@ app.get("/etatOccupationService/:idService/:date", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur ! etatoccup" });
   }
 });
+      //ajout d'un admin
+app.post("/personnelsAdministratifs", async (req, res) => {
+  try {
+    const { nom, prenom, adresse, telephone, email, dateEmbauche, poste, motDePasse, 
+      idService, estResponsable 
+    } = req.body;
+    if (!nom || !prenom || !dateEmbauche || !poste || !motDePasse) {
+      return res.status(400).send({ 
+        error: "Le nom, prénom, date d'embauche, poste et mot de passe sont obligatoires" 
+      });
+    }
 
+    const personnelAdmin = await ajouterPersonnelAdministratif(nom, prenom, adresse, 
+      telephone, email, dateEmbauche, poste, motDePasse, idService, estResponsable
+    );
+
+    res.status(201).send(personnelAdmin);
+  } catch (error) {
+    console.error("Erreur ajout du personnel admin! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout du personnel administratif" });
+  }
+});
 
 //Medecin
 app.get("/patients", async (req, res) => {

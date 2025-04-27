@@ -173,6 +173,52 @@ export async function getAdministratifs() {
   `);
   return rows;
 }
+//ajouter admin
+export async function ajouterPersonnelAdministratif(
+  nom, 
+  prenom, 
+  adresse, 
+  telephone, 
+  email, 
+  dateEmbauche, 
+  poste, 
+  motDePasse, 
+  idService, 
+  estResponsable = false) 
+{
+  
+  const [resultPersonne] = await pool.query(`
+    INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
+    VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
+  `, [nom, prenom, adresse, telephone, email]);
+
+  const idPersonne = resultPersonne.insertId;
+
+  await pool.query(`
+    INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
+    VALUES (?, ?, 'Admin', ?);
+  `, [idPersonne, dateEmbauche, idService]);
+
+  const username = (prenom.charAt(0) + nom).toLowerCase();
+  const [resultAdmin] = await pool.query(`
+    INSERT INTO Personnel_Administratif (id_admin, poste, username, mot_de_passe, est_responsable)
+    VALUES (?, ?, ?, ?, ?);
+  `, [idPersonne, poste, username, motDePasse, estResponsable ? 1 : 0]);
+
+  return {
+    id: idPersonne,
+    nom,
+    prenom,
+    adresse,
+    telephone,
+    email,
+    dateEmbauche,
+    poste,
+    username,
+    idService,
+    estResponsable
+  };
+}
 
 //list patient
 
