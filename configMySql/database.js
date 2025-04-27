@@ -303,7 +303,36 @@ ORDER BY
     `);
   return rows;
 }
-
+export async function getPatientsRetardSortie() {
+  const [rows] = await pool.query(`
+    SELECT 
+    p.id_patient,
+    pers.nom,
+    pers.prenom,
+    s.id_sejour,
+    s.date_arrivee,
+    s.date_sortie_previsionnelle,
+    s.date_sortie_reelle,
+    DATEDIFF(s.date_sortie_reelle, s.date_sortie_previsionnelle) AS jours_de_retard,
+    c.numero AS numero_chambre,
+    l.numero AS numero_lit,
+    serv.nom AS service
+FROM 
+    Patient p
+    INNER JOIN Personne pers ON p.id_patient = pers.id_personne
+    INNER JOIN Sejour s ON p.id_patient = s.id_patient
+    INNER JOIN Lit l ON s.id_lit = l.id_lit
+    INNER JOIN Chambre c ON l.id_chambre = c.id_chambre
+    INNER JOIN Service serv ON c.id_service = serv.id_service
+WHERE 
+    s.date_sortie_reelle IS NOT NULL
+    AND s.date_sortie_previsionnelle IS NOT NULL
+    AND s.date_sortie_reelle > s.date_sortie_previsionnelle
+ORDER BY 
+    jours_de_retard DESC;
+    `);
+  return rows;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
