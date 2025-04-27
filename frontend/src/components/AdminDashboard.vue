@@ -16,11 +16,11 @@
     </div>
 </template>
 <script>
-    import AjouterMedecin from "./AjouterMedecin.vue";
-import ListeInfirm from "./ListeInfirm.vue";
-import ListeMedecins from "./ListeMedecins.vue";
-import ListPersAdmin from "./ListPersAdmin.vue";
-import ListPersNet from "./ListPersNet.vue";
+    import AjouterMedecin from "./Admin/AjouterMedecin.vue";
+import ListeInfirm from "./Admin/ListeInfirm.vue";
+import ListeMedecins from "./Admin/ListeMedecins.vue";
+import ListPersAdmin from "./Admin/ListPersAdmin.vue";
+import ListPersNet from "./Admin/ListPersNet.vue";
 
 export default {
   name: "App",
