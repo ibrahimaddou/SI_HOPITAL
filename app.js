@@ -3,7 +3,7 @@ import {
   getMedecinById,getMedecins,addMedecin,
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides, getDossierPatient, getMedic_patient 
+    getChambresVides, getDossierPatient, getMedic_patient, getDetailReunionSoin 
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -120,6 +120,23 @@ app.get('/afficherMedicamentsPatient/:idPatient', async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la récupération des médicaments du patient :', error);
     res.status(500).send('Erreur lors de la récupération des médicaments');
+  }
+});
+
+app.get('/afficherDetailReunion/:idSoin', async (req, res) => {
+  const idSoin = req.params.idSoin;
+
+  try {
+    const reunion = await getDetailReunionSoin(idSoin);
+    
+    if (!reunion || reunion.length === 0) {
+      return res.status(404).send('Aucune réunion trouvée pour ce soin');
+    }
+
+    res.send(reunion[0]); // On renvoie un seul objet
+  } catch (error) {
+    console.error('Erreur lors de la récupération des détails de réunion :', error);
+    res.status(500).send('Erreur lors de la récupération de la réunion');
   }
 });
 

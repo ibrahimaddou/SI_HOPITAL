@@ -375,6 +375,26 @@ export async function getMedic_patient (idPatient) {
   return rows;
 }
 
+// Récupérer les détails de la réunion liée à un soin
+export async function getDetailReunionSoin(idSoin) {
+  const [rows] = await pool.query(`
+    SELECT 
+      r.id_reunion, 
+      r.date_reunion, 
+      r.sujet, 
+      r.compte_rendu
+    FROM 
+      soin s
+    INNER JOIN 
+  reunion r ON s.id_reunion_decision = r.id_reunion
+    WHERE 
+      s.id_soin = ?
+  `, [idSoin]);
+  
+  return rows;
+}
+
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

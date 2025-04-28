@@ -36,6 +36,7 @@
           :key="medicament.id_medicament"
           class="ml-4 mb-2"
         >
+          <h3>Medicament</h3>
           <p><strong>Nom :</strong> {{ medicament.nom_medicament }}</p>
           <p>
             <strong>Description :</strong>
