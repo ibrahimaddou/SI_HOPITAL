@@ -599,6 +599,32 @@ export async function ajouterSejour(
 
   return resultSejour;
 }
+// affichage des services
+export async function getServices() {
+  
+    const [services] = await pool.query(`
+      SELECT 
+        s.id_service,
+        s.nom,
+        s.etage,
+        pa.id_admin AS id_responsable_admin,
+        CONCAT(p_admin.prenom, ' ', p_admin.nom) AS nom_responsable_admin,
+        m.id_medecin AS id_medecin_referent,
+        CONCAT(p_med.prenom, ' ', p_med.nom) AS nom_medecin_referent,
+        m.specialite AS specialite_medecin,
+        (SELECT COUNT(*) FROM Chambre c WHERE c.id_service = s.id_service) AS nombre_chambres
+      FROM Service s
+      LEFT JOIN Personnel_Administratif pa ON s.id_responsable_admin = pa.id_admin
+      LEFT JOIN Personnel pa_pers ON pa.id_admin = pa_pers.id_personnel
+      LEFT JOIN Personne p_admin ON pa_pers.id_personnel = p_admin.id_personne
+      LEFT JOIN Medecin m ON s.id_medecin_referent = m.id_medecin
+      LEFT JOIN Personnel m_pers ON m.id_medecin = m_pers.id_personnel
+      LEFT JOIN Personne p_med ON m_pers.id_personnel = p_med.id_personne
+      ORDER BY s.nom ASC
+    `);
+
+    return services;
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

@@ -6,7 +6,7 @@ import {
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
-    ajouterInfirmier,ajouterSejour
+    ajouterInfirmier,ajouterSejour,getServices
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -256,6 +256,15 @@ app.post("/sejours", async (req, res) => {
   }
 });
 
+app.get("/services", async (req, res) => {
+  try {
+    const services = await getServices();
+    res.json(services);
+  } catch (error) {
+    console.error("Erreur lors de l'affichage des services:", error);
+    res.status(500).send({ error: "Erreur serveur - affichage des services" });
+  }
+});
 //Medecin_____________________________________________________________________________________
 app.get("/patients", async (req, res) => {
   const patients = await getPatients()
