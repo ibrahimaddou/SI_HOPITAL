@@ -1,12 +1,12 @@
 import express from 'express'
 import { 
-  getMedecinById,getMedecins,addMedecin,
-   getInfirmiers, getAdministratifs,
-    getPatients, getNettoyage,getLitsDisponibles,
-    getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
+  getMedecinById,getMedecins,addMedecin,getInfirmiers, getAdministratifs,
+    getPatients, getNettoyage,getLitsDisponibles,getChambresVides,
+    getChambresNonNettoyees,getPatientsRetardSortie,
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
-    ajouterInfirmier,ajouterSejour,getServices,getChambresParService
+    ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
+    getMedicaments
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -287,6 +287,11 @@ app.post("/patients", async (req, res) => {
   }
 });
 
+app.get("/afficherMedicaments", async (req, res) => {
+  const medicaments = await getMedicaments()
+  res.send(medicaments)
+})
+
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
   try {
@@ -305,6 +310,7 @@ app.get("/afficherChambres/:idService", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - affichage des chambres" });
   }
 });
+
 
 //Personnel net_____________________________________________________________________________________
 app.get("/chambresNonNettoyees", async (req, res) => {

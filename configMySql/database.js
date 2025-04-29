@@ -669,6 +669,21 @@ export async function getChambresParService(idService) {
   }
 }
 
+export async function getMedicaments() {
+  const [medicaments] = await pool.query(`
+    SELECT 
+      id_medicament,
+      nom,
+      description,
+      dosage
+    FROM 
+      Medicament
+    ORDER BY 
+      nom ASC;
+  `);
+  return medicaments;
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);
