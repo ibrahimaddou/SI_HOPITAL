@@ -5,7 +5,7 @@ import {
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
-    ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours
+    ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours, ajouterInfirmier
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -169,6 +169,45 @@ app.post("/personnelsNettoyage", async (req, res) => {
   } catch (error) {
     console.error("Erreur ajout du personnel de nettoyage! ", error);
     res.status(500).send({ error: "Erreur serveur - ajout du personnel de nettoyage" });
+  }
+});
+//ajout d infirmier
+app.post("/infirmiers", async (req, res) => {
+  try {
+    const { 
+      nom, 
+      prenom, 
+      adresse, 
+      telephone, 
+      email, 
+      dateEmbauche, 
+      qualification, 
+      motDePasse,
+      idService 
+    } = req.body;
+
+    if (!nom || !prenom || !dateEmbauche || !motDePasse) {
+      return res.status(400).send({
+        error: "Le nom, prénom, date d'embauche et mot de passe sont obligatoires"
+      });
+    }
+
+    const infirmier = await ajouterInfirmier(
+      nom, 
+      prenom, 
+      adresse, 
+      telephone, 
+      email, 
+      dateEmbauche, 
+      qualification, 
+      motDePasse, 
+      idService
+    );
+
+    res.status(201).send(infirmier);
+  } catch (error) {
+    console.error("Erreur ajout de l'infirmier! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout de l'infirmier" });
   }
 });
 app.get("/sejours", async (req,res)=>{
