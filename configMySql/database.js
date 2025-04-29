@@ -90,9 +90,9 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
         VALUES (?, ?, ?);
     `, [idPersonne, specialite, motDePasse]);
 
-  console.log("Médecin ajouté avec succès !");
-  console.log("ID Personne:", idPersonne);
-  console.log("ID Médecin:", idPersonne);
+ // console.log("Médecin ajouté avec succès !");
+  //console.log("ID Personne:", idPersonne);
+  //console.log("ID Médecin:", idPersonne);
 
   return resultMedecin;
 }
@@ -524,6 +524,39 @@ export async function modifierDateSortiePatient(req, res) {
       error: error.message 
     });
   }
+}
+
+//pour ajouter un infirmier
+export async function ajouterInfirmier(
+  nom, 
+  prenom, 
+  adresse, 
+  telephone, 
+  email, 
+  dateEmbauche, 
+  qualification,
+  username, 
+  motDePasse, 
+  idService
+) {
+  const [resultPersonne] = await pool.query(`
+    INSERT INTO Personne (nom, prenom, adresse, telephone, email, date_naissance, type_personne) 
+    VALUES (?, ?, ?, ?, ?, CURDATE(), 'Personnel');
+  `, [nom, prenom, adresse, telephone, email]);
+
+  const idPersonne = resultPersonne.insertId;
+
+  await pool.query(`
+    INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
+    VALUES (?, ?, 'Infirmier', ?);
+  `, [idPersonne, dateEmbauche, idService]);
+
+  const [resultInfirmier] = await pool.query(`
+    INSERT INTO Infirmier (id_infirmier, qualification, username, mot_de_passe)
+    VALUES (?, ?, ?, ?);
+  `, [idPersonne, qualification, username, motDePasse]);
+
+  return resultInfirmier;
 }
 
 /*export async function () {
