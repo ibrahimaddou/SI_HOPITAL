@@ -474,6 +474,57 @@ export async function ajouterPersonnelNettoyage(
 
   return resultNettoyage;
 }
+//pour modifier la date de sortie d'un patient
+export async function getSejours(req, res){
+  const [rows] = await pool.query(`
+    SELECT * 
+    FROM Sejour
+    `);
+  return rows;
+}
+export async function modifierDateSortiePatient(req, res) {
+  const idSejour = req.params.idSejour;
+  const { date_sortie_reelle } = req.body;
+    if (!date_sortie_reelle) {
+    return res.status(400).json({ 
+      success: false, 
+      message: "La date de sortie réelle est requise" 
+    });
+  }
+  
+  try {
+    // Vérif  si séjour existe
+    const [sejour] = await pool.query(
+      "SELECT * FROM Sejour WHERE id_sejour = ?",
+      [idSejour]
+    );
+    
+    if (sejour.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Séjour non trouvé" 
+      });
+    }
+    
+    // MAJ de la date de sortie réelle
+    await pool.query(
+      "UPDATE Sejour SET date_sortie_reelle = ? WHERE id_sejour = ?",
+      [date_sortie_reelle, idSejour]
+    );
+    res.status(200).json({ 
+      success: true, 
+      message: "date de sortie mise à jour avec succès" 
+    });
+    
+  } catch (error) {
+    console.error("Erreur lors de la modification de la date de sortie:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Erreur serveur lors de la modification de la date de sortie",
+      error: error.message 
+    });
+  }
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

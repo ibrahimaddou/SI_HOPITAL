@@ -4,7 +4,8 @@ import {
    getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
-    getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,ajouterPersonnelNettoyage
+    getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
+    ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -170,6 +171,12 @@ app.post("/personnelsNettoyage", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout du personnel de nettoyage" });
   }
 });
+app.get("/sejours", async (req,res)=>{
+  const sejours = await getSejours()
+
+  res.send(sejours)
+})
+app.put("/modifierDateSortiePatient/:idSejour", modifierDateSortiePatient);
 
 //Medecin_____________________________________________________________________________________
 app.get("/patients", async (req, res) => {
