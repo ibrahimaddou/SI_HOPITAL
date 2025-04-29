@@ -725,6 +725,75 @@ export async function getChambresANettoyer() {
   
   return chambres;
 }
+//ajout d un nettoyage
+export async function enregistrerNettoyage(idChambre, idPersonnelNettoyage, dateNettoyage) {
+  try {
+    // Vérification de la chambre
+    const [chambreExiste] = await pool.query(
+      "SELECT id_chambre FROM Chambre WHERE id_chambre = ?", 
+      [idChambre]
+    );
+    
+    if (chambreExiste.length === 0) {
+      throw new Error(`chambre avec l'id ${idChambre} existe pas`);
+    }
+    
+     // Vérification du personnel de nettoyage
+    const [personnelExiste] = await pool.query(
+      "SELECT id_nettoyage FROM Personnel_Nettoyage WHERE id_nettoyage = ?", 
+      [idPersonnelNettoyage]
+    );
+    
+    if (personnelExiste.length === 0) {
+      throw new Error(`personnel de nettoyage avec l'id ${idPersonnelNettoyage} existe pas`);
+    }
+    
+    const [result] = await pool.query(`
+      INSERT INTO Nettoyage (
+        id_chambre, 
+        date_nettoyage, 
+        id_personnel_nettoyage
+      ) 
+      VALUES (?, ?, ?);
+    `, [idChambre, dateNettoyage, idPersonnelNettoyage]);
+    
+    // Récupérer les détails du nettoyage créé
+    if (result.insertId) {
+      const [nettoyage] = await pool.query(`
+        SELECT 
+          n.id_nettoyage,
+          n.id_chambre,
+          n.date_nettoyage,
+          n.id_personnel_nettoyage,
+          c.numero AS numero_chambre,
+          c.etage,
+          s.nom AS nom_service,
+          CONCAT(p.prenom, ' ', p.nom) AS nom_personnel
+        FROM 
+          Nettoyage n
+        JOIN 
+          Chambre c ON n.id_chambre = c.id_chambre
+        JOIN 
+          Service s ON c.id_service = s.id_service
+        JOIN 
+          Personnel_Nettoyage pn ON n.id_personnel_nettoyage = pn.id_nettoyage
+        JOIN 
+          Personnel pe ON pn.id_nettoyage = pe.id_personnel
+        JOIN 
+          Personne p ON pe.id_personnel = p.id_personne
+        WHERE 
+          n.id_nettoyage = ?
+      `, [result.insertId]);
+      
+      return nettoyage;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("erreur enregistrement du nettoyage:", error);
+    throw error;
+  }
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

@@ -6,7 +6,7 @@ import {
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
-    getMedicaments,getChambresANettoyer
+    getMedicaments,getChambresANettoyer,enregistrerNettoyage
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -321,6 +321,24 @@ app.get("/chambresANettoyer", async (req, res) => {
   const chambres = await getChambresANettoyer()
   res.send(chambres)
 }) 
+app.post("/enregistrerNettoyage", async (req, res) => {
+  try {
+    const { idChambre, idPersonnelNettoyage, dateNettoyage } = req.body;
+    
+    if (!idChambre || !idPersonnelNettoyage) {
+      return res.status(400).send({ error: "L'ID de la chambre et l'ID du personnel de nettoyage sont obligatoires" });
+    }
+    const dateEffective = dateNettoyage || new Date();
+    
+    const nettoyage = await enregistrerNettoyage(idChambre, idPersonnelNettoyage, dateEffective);
+    
+      res.status(201).send(nettoyage);
+    
+  } catch (error) {
+    console.error("Erreur lors de l'enregistrement du nettoyage! ", error);
+    res.status(500).send({ error: "Erreur serveur - enregistrement du nettoyage" });
+  }
+})
 //_________________________________________________________________________________________________
 async function connectDB() {
     try {
