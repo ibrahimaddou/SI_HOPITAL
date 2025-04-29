@@ -6,7 +6,7 @@ import {
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
-    getMedicaments
+    getMedicaments,getChambresANettoyer
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -317,7 +317,11 @@ app.get("/chambresNonNettoyees", async (req, res) => {
   const chambres = await getChambresNonNettoyees()
   res.send(chambres)
 })
-
+app.get("/chambresANettoyer", async (req, res) => {
+  const chambres = await getChambresANettoyer()
+  res.send(chambres)
+}) 
+//_________________________________________________________________________________________________
 async function connectDB() {
     try {
       return mysql.createConnection(dbConfig).promise();
@@ -367,7 +371,7 @@ const rows = result[0]
     
     if (password !== user.mot_de_passe) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
-    }
+  }
 
 
         

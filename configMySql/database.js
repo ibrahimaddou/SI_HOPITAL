@@ -668,7 +668,7 @@ export async function getChambresParService(idService) {
     throw error;
   }
 }
-
+// afficher les med
 export async function getMedicaments() {
   const [medicaments] = await pool.query(`
     SELECT 
@@ -682,6 +682,48 @@ export async function getMedicaments() {
       nom ASC;
   `);
   return medicaments;
+}
+//les chambres a nett
+export async function getChambresANettoyer() {
+  const [chambres] = await pool.query(`
+    SELECT 
+      c.id_chambre,
+      c.numero,
+      c.etage,
+      c.capacite,
+      s.nom AS nom_service,
+      s.id_service,
+      MAX(sej.date_sortie_reelle) AS derniere_sortie,
+      MAX(n.date_nettoyage) AS dernier_nettoyage,
+      CASE
+        WHEN MAX(n.date_nettoyage) IS NULL THEN 'urgente'
+        WHEN MAX(sej.date_sortie_reelle) > MAX(n.date_nettoyage) THEN
+          CASE
+            WHEN DATEDIFF(CURDATE(), MAX(sej.date_sortie_reelle)) > 3 THEN 'urgente'
+            ELSE 'haute'
+          END
+        ELSE 'normale'
+      END AS priorite
+    FROM 
+      Chambre c
+    JOIN 
+      Service s ON c.id_service = s.id_service
+    JOIN 
+      Lit l ON l.id_chambre = c.id_chambre
+    JOIN 
+      Sejour sej ON sej.id_lit = l.id_lit AND sej.date_sortie_reelle IS NOT NULL
+    LEFT JOIN 
+      Nettoyage n ON n.id_chambre = c.id_chambre
+    GROUP BY 
+      c.id_chambre
+    HAVING 
+      MAX(n.date_nettoyage) IS NULL OR MAX(sej.date_sortie_reelle) > MAX(n.date_nettoyage)
+    ORDER BY 
+      priorite ASC,
+      derniere_sortie DESC;
+  `);
+  
+  return chambres;
 }
 
 /*export async function () {
