@@ -625,6 +625,49 @@ export async function getServices() {
 
     return services;
 }
+//chambres d'un service spécifique
+export async function getChambresParService(idService) {
+  try {
+    const [serviceExiste] = await pool.query(`
+      SELECT id_service, nom FROM Service WHERE id_service = ?
+    `, [idService]);
+        const nomService = serviceExiste[0].nom;
+
+        const [chambres] = await pool.query(`
+      SELECT 
+        c.id_chambre,
+        c.numero,
+        c.etage,
+        c.capacite,
+        ? AS nom_service,
+        (
+          SELECT COUNT(*) 
+          FROM Lit l 
+          WHERE l.id_chambre = c.id_chambre
+        ) AS nombre_lits_total,
+        (
+          SELECT COUNT(*) 
+          FROM Lit l 
+          JOIN Sejour s ON l.id_lit = s.id_lit 
+          WHERE l.id_chambre = c.id_chambre AND s.date_sortie_reelle IS NULL
+        ) AS nombre_lits_occupes
+      FROM Chambre c
+      WHERE c.id_service = ?
+      ORDER BY c.numero
+    `, [nomService, idService]);
+        const chambresAvecLitsDisponibles = chambres.map(chambre => {
+      return {
+        ...chambre,
+        nombre_lits_disponibles: chambre.nombre_lits_total - chambre.nombre_lits_occupes
+      };
+    });
+    
+    return chambresAvecLitsDisponibles;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des chambres du service:", error);
+    throw error;
+  }
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

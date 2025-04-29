@@ -6,7 +6,7 @@ import {
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
-    ajouterInfirmier,ajouterSejour,getServices
+    ajouterInfirmier,ajouterSejour,getServices,getChambresParService
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -287,10 +287,26 @@ app.post("/patients", async (req, res) => {
   }
 });
 
-//Infirmiers
+//Infirmiers_______________________________________________________________________________________
+app.get("/afficherChambres/:idService", async (req, res) => {
+  try {
+    const idService = parseInt(req.params.idService);
+    
+    if (isNaN(idService)) {
+      return res.status(400).send({ error: "id du service doit être un nombre entier" });
+    }
+    
+    const chambres = await getChambresParService(idService);
+    
+    res.json(chambres);
+  } catch (error) {
+    console.error("Erreur lors de l'affichage des chambres:", error);
+  
+    res.status(500).send({ error: "Erreur serveur - affichage des chambres" });
+  }
+});
 
-
-//Personnel net
+//Personnel net_____________________________________________________________________________________
 app.get("/chambresNonNettoyees", async (req, res) => {
   const chambres = await getChambresNonNettoyees()
   res.send(chambres)
