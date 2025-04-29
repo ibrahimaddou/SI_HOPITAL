@@ -558,6 +558,47 @@ export async function ajouterInfirmier(
 
   return resultInfirmier;
 }
+// ajout d'un séjour
+export async function ajouterSejour(
+  idPatient,
+  idLit,
+  dateArrivee,
+  dateSortiePrevisionnelle,
+  raisonSejour,
+  idAdminAffectation
+) {
+  const [litOccupe] = await pool.query(`
+    SELECT * FROM Sejour 
+    WHERE id_lit = ? 
+    AND (date_sortie_reelle IS NULL OR date_sortie_reelle > ?)
+  `, [idLit, dateArrivee]);
+
+  if (litOccupe.length > 0) {
+    throw new Error('Ce lit est déjà occupé pour la période demandée');
+  }
+
+  // insertion du nv séjour
+  const [resultSejour] = await pool.query(`
+    INSERT INTO Sejour (
+      id_patient, 
+      id_lit, 
+      date_arrivee, 
+      date_sortie_previsionnelle, 
+      raison_sejour, 
+      id_admin_affectation
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?);
+  `, [
+    idPatient,
+    idLit,
+    dateArrivee,
+    dateSortiePrevisionnelle,
+    raisonSejour,
+    idAdminAffectation
+  ]);
+
+  return resultSejour;
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

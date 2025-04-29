@@ -5,7 +5,8 @@ import {
     getPatients, getNettoyage,getLitsDisponibles,
     getChambresVides,getChambresNonNettoyees,getPatientsRetardSortie,
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
-    ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours, ajouterInfirmier
+    ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
+    ajouterInfirmier,ajouterSejour
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -217,6 +218,44 @@ app.get("/sejours", async (req,res)=>{
 })
 app.put("/modifierDateSortiePatient/:idSejour", modifierDateSortiePatient);
 
+app.post("/sejours", async (req, res) => {
+  try {
+    const { 
+      idPatient, 
+      idLit, 
+      dateArrivee, 
+      dateSortiePrevisionnelle, 
+      raisonSejour,
+      idAdminAffectation 
+    } = req.body;
+    
+    if (!idPatient || !idLit || !dateArrivee || !raisonSejour || !idAdminAffectation) {
+      return res.status(400).send({ 
+        error: "L'ID du patient, l'ID du lit, la date d'arrivée, la raison du séjour et l'ID de l'administrateur sont obligatoires" 
+      });
+    }
+    
+    const sejour = await ajouterSejour(
+      idPatient,
+      idLit,
+      dateArrivee,
+      dateSortiePrevisionnelle,
+      raisonSejour,
+      idAdminAffectation
+    );
+    
+    res.status(201).send(sejour);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du séjour! ", error);
+    
+    if (error.message && error.message.includes("lit est déjà occupé")) {
+      return res.status(400).send({ error: error.message });
+    }
+    
+    res.status(500).send({ error: "Erreur serveur - ajout du séjour" });
+  }
+});
+
 //Medecin_____________________________________________________________________________________
 app.get("/patients", async (req, res) => {
   const patients = await getPatients()
@@ -298,6 +337,8 @@ const rows = result[0]
     if (password !== user.mot_de_passe) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }
+
+
         
     // Création du token JWT
     const token = jwt.sign(
