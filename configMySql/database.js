@@ -794,7 +794,53 @@ export async function enregistrerNettoyage(idChambre, idPersonnelNettoyage, date
     throw error;
   }
 }
-
+export async function getSoinsAEffectuerByInfirmierId(idInfirmier) {
+  const [soins] = await pool.query(`
+    SELECT 
+      s.id_soin,
+      s.description,
+      per_patient.nom AS nom_patient,
+      per_patient.prenom AS prenom_patient,
+      c.numero AS numero_chambre,
+      l.numero AS numero_lit,
+      m.nom AS nom_medicament,
+      ms.quantite,
+      r.date_reunion
+    FROM 
+      Personnel inf
+    JOIN
+      Service serv ON inf.id_service = serv.id_service
+    JOIN
+      Chambre c ON serv.id_service = c.id_service
+    JOIN 
+      Lit l ON c.id_chambre = l.id_chambre
+    JOIN 
+      Sejour sej ON l.id_lit = sej.id_lit AND sej.date_sortie_reelle IS NULL
+    JOIN 
+      Patient pat ON sej.id_patient = pat.id_patient
+    JOIN 
+      Personne per_patient ON pat.id_patient = per_patient.id_personne
+    JOIN 
+      Soin s ON pat.id_patient = s.id_patient
+    JOIN
+      Medicament_Soin ms ON s.id_soin = ms.id_soin
+    JOIN
+      Medicament m ON ms.id_medicament = m.id_medicament
+    JOIN
+      Reunion r ON s.id_reunion_decision = r.id_reunion
+    WHERE 
+      inf.id_personnel = ?
+      AND NOT EXISTS (
+        SELECT 1
+        FROM Administration_Soin adm
+        WHERE adm.id_soin = s.id_soin AND adm.id_infirmier = ?
+      )
+    ORDER BY 
+      c.numero, l.numero
+  `, [idInfirmier, idInfirmier]);
+  
+  return soins;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

@@ -6,7 +6,8 @@ import {
     getEtatOccupationService,ajouterPatient,ajouterPersonnelAdministratif,
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
-    getMedicaments,getChambresANettoyer,enregistrerNettoyage
+    getMedicaments,getChambresANettoyer,enregistrerNettoyage,
+    getSoinsAEffectuerByInfirmierId
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -309,6 +310,13 @@ app.get("/afficherChambres/:idService", async (req, res) => {
   
     res.status(500).send({ error: "Erreur serveur - affichage des chambres" });
   }
+});
+
+app.get("/afficherSoinsAEffectuer/:idInfirmier", async (req, res) => {
+  const idInfirmier = req.params.idInfirmier;
+  const soinsAEffectuer = await getSoinsAEffectuerByInfirmierId(idInfirmier);
+  
+  res.send(soinsAEffectuer);
 });
 
 
