@@ -1005,6 +1005,52 @@ export async function supprimerSejour(idSejour) {
     throw error;
   }
 }
+//supprimer soin
+export async function supprimerSoin(idSoin) {
+  try {
+    await pool.query('START TRANSACTION');
+    
+    const [soinExists] = await pool.query(
+      "SELECT * FROM Soin WHERE id_soin = ?",
+      [idSoin]
+    );
+    
+    if (soinExists.length === 0) {
+      throw new Error("Le soin spécifié n'existe pas");
+    }
+    
+    // pour vérifier si le soin a déjà été administré
+    const [administrations] = await pool.query(
+      "SELECT COUNT(*) AS count FROM Administration_Soin WHERE id_soin = ?",
+      [idSoin]
+    );
+    
+    if (administrations[0].count > 0) {
+      throw new Error("Impossible de supprimer un soin déjà administré");
+    }
+    
+    await pool.query(
+      "DELETE FROM Medicament_Soin WHERE id_soin = ?",
+      [idSoin]
+    );
+    
+    await pool.query(
+      "DELETE FROM Soin WHERE id_soin = ?",
+      [idSoin]
+    );
+    
+    await pool.query('COMMIT');
+    
+    return { 
+      success: true, 
+      message: "Soin supprimé avec succès" 
+    };
+  } catch (error) {
+    // en cas d'erreur, annuler toutes les modifications
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
