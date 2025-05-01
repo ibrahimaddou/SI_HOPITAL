@@ -1051,6 +1051,104 @@ export async function supprimerSoin(idSoin) {
     throw error;
   }
 }
+//afficher reunions
+export async function afficherReunions() {
+  try {
+    const [reunions] = await pool.query(`
+      SELECT 
+        r.id_reunion,
+        r.date_reunion,
+        r.sujet,
+        r.compte_rendu,
+        (
+          SELECT COUNT(*) 
+          FROM Soin 
+          WHERE id_reunion_decision = r.id_reunion
+        ) AS nombre_soins,
+        (
+          SELECT GROUP_CONCAT(CONCAT(p.nom, ' ', p.prenom) SEPARATOR ', ')
+          FROM Participation_Medecin_Reunion pmr
+          JOIN Medecin m ON pmr.id_medecin = m.id_medecin
+          JOIN Personnel pe ON m.id_medecin = pe.id_personnel
+          JOIN Personne p ON pe.id_personnel = p.id_personne
+          WHERE pmr.id_reunion = r.id_reunion
+        ) AS medecins_participants,
+        (
+          SELECT GROUP_CONCAT(CONCAT(p.nom, ' ', p.prenom) SEPARATOR ', ')
+          FROM Participation_Infirmier_Reunion pir
+          JOIN Infirmier i ON pir.id_infirmier = i.id_infirmier
+          JOIN Personnel pe ON i.id_infirmier = pe.id_personnel
+          JOIN Personne p ON pe.id_personnel = p.id_personne
+          WHERE pir.id_reunion = r.id_reunion
+        ) AS infirmiers_participants
+      FROM Reunion r
+      ORDER BY r.date_reunion DESC
+    `);
+
+    return reunions;
+  } catch (error) {
+    throw error;
+  }
+}
+//supprimer reunion
+export async function supprimerReunion(idReunion) {
+  try {
+    await pool.query('START TRANSACTION');
+    
+    const [reunionExists] = await pool.query(
+      "SELECT * FROM Reunion WHERE id_reunion = ?",
+      [idReunion]
+    );
+    
+    if (reunionExists.length === 0) {
+      throw new Error("La réunion spécifiée n'existe pas");
+    }
+    
+    const reunion = reunionExists[0];
+    const dateReunion = new Date(reunion.date_reunion);
+    const maintenant = new Date();
+    
+    if (dateReunion <= maintenant) {
+      throw new Error("Impossible d'annuler une réunion déjà tenue");
+    }
+    
+    const [soinsAssocies] = await pool.query(
+      "SELECT COUNT(*) AS count FROM Soin WHERE id_reunion_decision = ?",
+      [idReunion]
+    );
+    
+    if (soinsAssocies[0].count > 0) {
+      throw new Error("Impossible de supprimer cette réunion : des soins y ont été planifiés");
+    }
+    
+    await pool.query(
+      "DELETE FROM Participation_Medecin_Reunion WHERE id_reunion = ?",
+      [idReunion]
+    );
+    
+    await pool.query(
+      "DELETE FROM Participation_Infirmier_Reunion WHERE id_reunion = ?",
+      [idReunion]
+    );
+    
+    await pool.query(
+      "DELETE FROM Reunion WHERE id_reunion = ?",
+      [idReunion]
+    );
+    
+    await pool.query('COMMIT');
+    
+    return { 
+      success: true, 
+      message: "Réunion annulée avec succès" 
+    };
+  } catch (error) {
+    // En cas d'erreur, annuler toutes les modifications
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

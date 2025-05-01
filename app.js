@@ -8,7 +8,7 @@ import {
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
-    supprimerPatient,supprimerSejour,supprimerSoin
+    supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -292,7 +292,20 @@ app.post("/patients", async (req, res) => {
 app.get("/afficherMedicaments", async (req, res) => {
   const medicaments = await getMedicaments()
   res.send(medicaments)
-})
+});
+
+app.get("/reunions", async (req, res) => {
+  try {
+    const reunions = await afficherReunions();
+    res.status(200).send(reunions);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des réunions: ", error);
+    res.status(500).send({ 
+      error: "Erreur serveur - récupération des réunions", 
+      message: error.message 
+    });
+  }
+});
 
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
@@ -430,6 +443,28 @@ app.delete("/supprimerSoin/:idSoin", async (req, res) => {
     console.error("Erreur lors de la suppression d'un soin: ", error);
     res.status(500).send({ 
       error: "Erreur serveur - suppression de soin", 
+      message: error.message 
+    });
+  }
+});
+
+app.delete("/supprimerReunion/:idReunion", async (req, res) => {
+  try {
+    const idReunion = req.params.idReunion;
+    
+    if (!idReunion) {
+      return res.status(400).send({ error: "ID de réunion obligatoire" });
+    }
+    
+    const resultat = await supprimerReunion(idReunion);
+    
+    res.status(200).send({ 
+      message: "Réunion annulée avec succès" 
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'annulation d'une réunion: ", error);
+    res.status(500).send({ 
+      error: "Erreur serveur - annulation de réunion", 
       message: error.message 
     });
   }
