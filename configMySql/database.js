@@ -224,8 +224,9 @@ export async function ajouterPersonnelAdministratif(
 
 export async function getPatients() {
   const [rows] = await pool.query(`
-    SELECT 
+    SELECT
       p.id_personne,
+      pa.id_patient,
       p.nom,
       p.prenom,
       p.date_naissance,
@@ -233,13 +234,13 @@ export async function getPatients() {
       p.telephone,
       p.email,
       pa.antecedents_medicaux
-    FROM 
+    FROM
       Personne p
-    JOIN 
+    JOIN
       Patient pa ON p.id_personne = pa.id_patient
-    WHERE 
+    WHERE
       p.type_personne = 'Patient'
-    ORDER BY 
+    ORDER BY
       p.nom, p.prenom;
   `);
   return rows;
@@ -901,7 +902,69 @@ export async function ajouterAdministrationSoin(id_soin, id_infirmier, commentai
   
   return administration;
 }
-
+//supprimerPatient
+export async function supprimerPatient(idPatient) {
+  try {
+    // transaction
+    await pool.query('START TRANSACTION');
+        const [patientExists] = await pool.query(
+      "SELECT p.id_personne FROM Patient pa JOIN Personne p ON pa.id_patient = p.id_personne WHERE pa.id_patient = ?",
+      [idPatient]
+    );
+    
+    if (patientExists.length === 0) {
+      throw new Error("Le patient spécifié n'existe pas");
+    }
+    
+    // suppression de tous qui est liées au patient
+    await pool.query(`
+      DELETE a FROM Administration_Soin a
+      JOIN Soin s ON a.id_soin = s.id_soin
+      WHERE s.id_patient = ?
+    `, [idPatient]);
+    
+    await pool.query(`
+      DELETE ms FROM Medicament_Soin ms
+      JOIN Soin s ON ms.id_soin = s.id_soin
+      WHERE s.id_patient = ?
+    `, [idPatient]);
+    
+   
+    await pool.query(
+      "DELETE FROM Soin WHERE id_patient = ?",
+      [idPatient]
+    );
+    
+    await pool.query(
+      "DELETE FROM Visite_Medicale WHERE id_patient = ?",
+      [idPatient]
+    );
+    
+    await pool.query(
+      "DELETE FROM Sejour WHERE id_patient = ?",
+      [idPatient]
+    );
+    
+    await pool.query(
+      "DELETE FROM Patient WHERE id_patient = ?",
+      [idPatient]
+    );
+    
+    await pool.query(
+      "DELETE FROM Personne WHERE id_personne = ?",
+      [idPatient]
+    );
+    
+    //pour  valider toutes les modifications
+    await pool.query('COMMIT');
+    
+    return { success: true, message: "patient et les données associées supprimés avec succès" };
+  } catch (error) {
+    // en cas d'erreur annulation de toutes les modifications
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

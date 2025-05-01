@@ -7,7 +7,8 @@ import {
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
-    getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin
+    getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
+    supprimerPatient
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -368,6 +369,26 @@ app.post("/administrationSoin", async (req, res) => {
   } catch (error) {
     console.error("Erreur lors de l'ajout d'une administration de soin! ", error);
     res.status(500).send({ error: "Erreur serveur - ajout d'administration de soin" });
+  }
+});
+//Req Delete_______________________________________________________________________________________
+app.delete("/supprimerPatients/:idPatient", async (req, res) => {
+  try {
+    const idPatient = req.params.idPatient;
+    
+    if (!idPatient) {
+      return res.status(400).send({ error: "id de patient obligatoire" });
+    }
+    
+    await supprimerPatient(idPatient);
+    
+    res.status(200).send({ message: "patient supprimé avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression d'un patient: ", error);
+    res.status(500).send({ 
+      error: "Erreur serveur - suppression de patient", 
+      message: error.message 
+    });
   }
 });
 //_________________________________________________________________________________________________
