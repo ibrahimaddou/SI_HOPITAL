@@ -841,6 +841,67 @@ export async function getSoinsAEffectuerByInfirmierId(idInfirmier) {
   
   return soins;
 }
+
+export async function getAdministrationSoin() {
+  const [adminS] = await pool.query(`
+    SELECT * 
+    FROM Administration_Soin;
+    `);
+  return adminS;
+}
+export async function ajouterAdministrationSoin(id_soin, id_infirmier, commentaires) {
+  // pour vérifier que le soin existe
+  const [soinExists] = await pool.query(
+    "SELECT id_soin FROM Soin WHERE id_soin = ?", 
+    [id_soin]
+  );
+  
+  if (soinExists.length === 0) {
+    throw new Error("Le soin spécifié n'existe pas");
+  }
+    const [infirmierExists] = await pool.query(
+    "SELECT id_infirmier FROM Infirmier WHERE id_infirmier = ?", 
+    [id_infirmier]
+  );
+  
+  if (infirmierExists.length === 0) {
+    throw new Error("infirmier n'existe pas");
+  }
+  
+  const date_heure = new Date();
+  
+  const [result] = await pool.query(`
+    INSERT INTO Administration_Soin 
+    (id_soin, id_infirmier, date_heure, commentaires) 
+    VALUES (?, ?, ?, ?)
+  `, [id_soin, id_infirmier, date_heure, commentaires]);
+  
+  const [administration] = await pool.query(`
+    SELECT 
+      ad.id_administration,
+      ad.id_soin,
+      ad.id_infirmier,
+      ad.date_heure,
+      ad.commentaires,
+      s.description AS description_soin,
+      CONCAT(p.prenom, ' ', p.nom) AS nom_infirmier
+    FROM 
+      Administration_Soin ad
+    JOIN 
+      Soin s ON ad.id_soin = s.id_soin
+    JOIN 
+      Infirmier i ON ad.id_infirmier = i.id_infirmier
+    JOIN 
+      Personnel pe ON i.id_infirmier = pe.id_personnel
+    JOIN 
+      Personne p ON pe.id_personnel = p.id_personne
+    WHERE 
+      ad.id_administration = ?
+  `, [result.insertId]);
+  
+  return administration;
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

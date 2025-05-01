@@ -7,7 +7,7 @@ import {
     ajouterPersonnelNettoyage,modifierDateSortiePatient,getSejours,
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
-    getSoinsAEffectuerByInfirmierId
+    getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -347,6 +347,29 @@ app.post("/enregistrerNettoyage", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - enregistrement du nettoyage" });
   }
 })
+//soins__________________________________________________________________________________________
+
+app.get("/administrationSoin", async (req, res) => {
+  const adminS = await getAdministrationSoin()
+  res.send(adminS)
+}) 
+
+app.post("/administrationSoin", async (req, res) => {
+  try {
+    const { id_soin, id_infirmier, commentaires } = req.body;
+    
+    if (!id_soin || !id_infirmier) {
+      return res.status(400).send({ error: "soin et infirmier sont obligatoires" });
+    }
+    
+    const administrationS = await ajouterAdministrationSoin(id_soin, id_infirmier, commentaires);
+    
+    res.status(201).send(administrationS);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'une administration de soin! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout d'administration de soin" });
+  }
+});
 //_________________________________________________________________________________________________
 async function connectDB() {
     try {
