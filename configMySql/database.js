@@ -965,6 +965,46 @@ export async function supprimerPatient(idPatient) {
     throw error;
   }
 }
+//supprimer sejour
+export async function supprimerSejour(idSejour) {
+  try {
+    await pool.query('START TRANSACTION');
+    
+    const [sejourExists] = await pool.query(
+      "SELECT * FROM Sejour WHERE id_sejour = ?",
+      [idSejour]
+    );
+    
+    if (sejourExists.length === 0) {
+      throw new Error("Le séjour spécifié n'existe pas");
+    }
+    
+    // Vérifier si le séjour n'a pas encore commencé (date_arrivee est dans le futur)
+    const sejour = sejourExists[0];
+    const dateArrivee = new Date(sejour.date_arrivee);
+    const maintenant = new Date();
+    
+    if (dateArrivee <= maintenant) {
+      throw new Error("Impossible de supprimer un séjour déjà commencé");
+    }
+    
+    await pool.query(
+      "DELETE FROM Sejour WHERE id_sejour = ?",
+      [idSejour]
+    );
+    
+    await pool.query('COMMIT');
+    
+    return { 
+      success: true, 
+      message: "Séjour supprimé avec succès" 
+    };
+  } catch (error) {
+    // En cas d'erreur, annuler toutes les modifications
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
