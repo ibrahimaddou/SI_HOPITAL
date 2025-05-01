@@ -469,6 +469,27 @@ app.delete("/supprimerReunion/:idReunion", async (req, res) => {
     });
   }
 });
+app.delete("/supprimerVisiteMedicale/:idVisite", async (req, res) => {
+  try {
+    const idVisite = req.params.idVisite;
+    
+    if (!idVisite) {
+      return res.status(400).send({ error: "ID de visite médicale obligatoire" });
+    }
+    
+    const resultat = await supprimerVisiteMedicale(idVisite);
+    
+    res.status(200).send({ 
+      message: "Visite médicale supprimée avec succès" 
+    });
+  } catch (error) {
+    console.error("Erreur lors de la suppression d'une visite médicale: ", error);
+    res.status(500).send({ 
+      error: "Erreur serveur - suppression de visite médicale", 
+      message: error.message 
+    });
+  }
+});
 //_________________________________________________________________________________________________
 async function connectDB() {
     try {

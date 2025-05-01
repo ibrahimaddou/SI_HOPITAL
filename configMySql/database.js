@@ -1148,7 +1148,38 @@ export async function supprimerReunion(idReunion) {
     throw error;
   }
 }
-
+//supprimer visiteMed
+export async function supprimerVisiteMedicale(idVisite) {
+  try {
+    await pool.query('START TRANSACTION');
+    
+    const [visiteExists] = await pool.query(
+      "SELECT * FROM Visite_Medicale WHERE id_visite = ?",
+      [idVisite]
+    );
+    
+    if (visiteExists.length === 0) {
+      throw new Error("La visite médicale spécifiée n'existe pas");
+    }
+    
+    // Supprimer la visite médicale
+    await pool.query(
+      "DELETE FROM Visite_Medicale WHERE id_visite = ?",
+      [idVisite]
+    );
+    
+    await pool.query('COMMIT');
+    
+    return { 
+      success: true, 
+      message: "Visite médicale supprimée avec succès" 
+    };
+  } catch (error) {
+    // En cas d'erreur, annuler toutes les modifications
+    await pool.query('ROLLBACK');
+    throw error;
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
