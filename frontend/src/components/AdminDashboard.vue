@@ -81,6 +81,13 @@
         >
           Afficher l'état d'occupation des services
         </button>
+        <button 
+          @click="activeComponent = 'AjouterPersAdmin'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AjouterPersAdmin'}"
+        >
+        Ajouter Personnel Administratif
+        </button>
         
       </nav>
     </div>
@@ -109,6 +116,7 @@ import ChambresVides from "./Admin/ChambresVides.vue";
 import ChambresNonNett from "./Admin/ChambresNonNett.vue";
 import PatientsRetardSortie from "./Admin/PatientsRetardSortie.vue";
 import EtatOccupService from "./Admin/EtatOccupService.vue";
+import AjouterPersAdmin from "./Admin/AjouterPersAdmin.vue";
 
 export default {
   name: "AdminDashboard",
@@ -124,6 +132,7 @@ export default {
     ChambresNonNett,
     PatientsRetardSortie,
     EtatOccupService,
+    AjouterPersAdmin,
   },
   data() {
     return {
@@ -134,7 +143,7 @@ export default {
     handleMedecinAjoute() {
       // Après l'ajout d'un médecin, revenir à la liste des médecins
       this.activeComponent = 'ListeMedecins';
-    }
+    },
   }
 }
 </script>
