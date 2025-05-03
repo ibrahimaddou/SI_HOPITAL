@@ -39,6 +39,13 @@
         >
           Personnel d'Entretien
         </button>
+        <button 
+          @click="activeComponent = 'ListePatients'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'ListePatients'}"
+        >
+          Afficher Patients
+        </button>
       </nav>
     </div>
 
@@ -60,6 +67,7 @@ import ListeInfirm from "./Admin/ListeInfirm.vue";
 import ListeMedecins from "./Admin/ListeMedecins.vue";
 import ListPersAdmin from "./Admin/ListPersAdmin.vue";
 import ListPersNet from "./Admin/ListPersNet.vue";
+import ListePatients from "./Admin/ListePatients.vue";
 
 export default {
   name: "AdminDashboard",
@@ -69,6 +77,7 @@ export default {
     ListPersAdmin,
     ListPersNet,
     AjouterMedecin,
+    ListePatients,
   },
   data() {
     return {

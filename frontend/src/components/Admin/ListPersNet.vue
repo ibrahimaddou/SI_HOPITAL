@@ -1,14 +1,11 @@
 <template>
   <div class="container mx-auto p-4">
-    <!-- Bouton pour charger le personnel de nettoyage -->
     <button @click="chargerPersonnelNettoyage">
       Charger le personnel de nettoyage
     </button>
 
-    <!-- Indicateur de chargement -->
     <div v-if="chargement">Chargement en cours...</div>
 
-    <!-- Message d'erreur -->
     <div v-if="erreur" class="erreur">{{ erreur }}</div>
 
     <!-- Liste du personnel de nettoyage (visible uniquement après chargement) -->
@@ -105,9 +102,8 @@ export default {
       this.erreur = null;
 
       axios
-        .get("http://localhost:3002/personnel_nettoyage")
+        .get("http://localhost:3002/personnelsNettoyage")
         .then((response) => {
-          // Vérifiez la structure de votre réponse
           if (response.data && response.data.personnelNettoyage) {
             this.personnelNettoyage = response.data.personnelNettoyage;
           } else if (Array.isArray(response.data)) {

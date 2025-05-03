@@ -4,14 +4,10 @@
     <button @click="chargerPersonnelAdmin">
       Charger le personnel administratif
     </button>
-
-    <!-- Indicateur de chargement -->
     <div v-if="chargement">Chargement en cours...</div>
-
-    <!-- Message d'erreur -->
     <div v-if="erreur" class="erreur">{{ erreur }}</div>
 
-    <!-- Liste du personnel administratif (visible uniquement après chargement) -->
+    <!-- Liste du personnel administratif visible uniquement après chargement -->
     <div v-if="!chargement && !erreur && personnelAdmin.length > 0">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -104,9 +100,8 @@ export default {
       this.erreur = null;
 
       axios
-        .get("http://localhost:3002/personnel_administratif") // Assurez-vous que cette route est correcte
+        .get("http://localhost:3002/personnelsAdministratifs") 
         .then((response) => {
-          // Vérifiez la structure de votre réponse
           if (response.data && response.data.personnelAdmin) {
             this.personnelAdmin = response.data.personnelAdmin;
           } else if (Array.isArray(response.data)) {
