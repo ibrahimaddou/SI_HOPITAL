@@ -1180,6 +1180,124 @@ export async function supprimerVisiteMedicale(idVisite) {
     throw error;
   }
 }
+
+export async function getDossierPatient(idPatient) {
+  // 1. Antécédents médicaux du patient
+
+  const [antecedents] = await pool.query(`
+    SELECT 
+      nom,
+      prenom,
+      date_naissance,
+      antecedents_medicaux
+    FROM 
+      Patient P , personne PE
+    WHERE 
+      p.id_patient = ?
+      AND PE.id_personne = ?
+  `, [idPatient, idPatient]);
+
+  // 2. Visites du patient
+  const [visites] = await pool.query(`
+    SELECT 
+      v.id_visite,
+      v.id_medecin,
+      v.date_visite,
+      v.examens_pratiques,
+      v.commentaires
+    FROM 
+      visite_medicale v
+    WHERE 
+      v.id_patient = ?
+    ORDER BY 
+      v.date_visite DESC
+  `, [idPatient]);
+
+  // 3. Soins du patient
+  const [soins] = await pool.query(`
+    SELECT 
+      s.id_soin,
+      s.description
+    FROM 
+      soin s
+    INNER JOIN 
+      patient ps ON s.id_patient = ps.id_patient
+    WHERE 
+      ps.id_patient = ?
+  `, [idPatient]);
+
+  // 4. Séjours du patient
+  const [sejours] = await pool.query(`
+    SELECT 
+      sej.id_sejour,
+      sej.id_lit,
+      sej.date_arrivee,
+      sej.date_sortie_previsionnelle,
+      sej.date_sortie_reelle,
+      sej.raison_sejour,
+      sej.id_admin_affectation
+    FROM 
+      sejour sej
+    WHERE 
+      sej.id_patient = ?
+    ORDER BY 
+      sej.date_arrivee DESC
+  `, [idPatient]);
+
+  // Assemblage final
+  return {
+    antecedents: antecedents[0] || null, // Juste un champ
+    visites,
+    soins,
+    sejours
+  };
+}
+
+export async function getMedic_patient (idPatient) {
+  const [rows] = await pool.query(`
+    SELECT 
+          s.id_soin,
+          s.description AS soin_description,
+          m.id_medicament,
+          m.nom AS nom_medicament,
+          m.description AS description_medicament,
+          m.dosage,
+          ms.quantite
+       FROM 
+          soin s
+       JOIN 
+          medicament_soin ms ON s.id_soin = ms.id_soin
+       JOIN 
+          medicament m ON ms.id_medicament = m.id_medicament
+       WHERE 
+          s.id_patient = ?
+       ORDER BY 
+          s.id_soin ASC`,
+    [idPatient]
+  );
+  return rows;
+}
+
+// Récupérer les détails de la réunion liée à un soin
+export async function getDetailReunionSoin(idSoin) {
+  const [rows] = await pool.query(`
+    SELECT 
+      r.id_reunion, 
+      r.date_reunion, 
+      r.sujet, 
+      r.compte_rendu
+    FROM 
+      soin s
+    INNER JOIN 
+  reunion r ON s.id_reunion_decision = r.id_reunion
+    WHERE 
+      s.id_soin = ?
+  `, [idSoin]);
+  
+  return rows;
+}
+
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);

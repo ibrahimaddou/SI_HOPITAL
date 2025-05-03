@@ -8,7 +8,8 @@ import {
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
-    supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion
+    supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,getDossierPatient, getMedic_patient, getDetailReunionSoin
+
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
@@ -306,6 +307,45 @@ app.get("/reunions", async (req, res) => {
     });
   }
 });
+app.get('/patient/dossier/:idPatient', async (req, res) => {
+  const idPatient = req.params.idPatient;
+  try {
+    const dossier = await getDossierPatient(idPatient);  // Ta fonction pour récupérer les données
+    res.json(dossier);  // Renvoie les données au frontend
+  } catch (error) {
+    res.status(500).send('Erreur lors de la récupération du dossier');
+  }
+});
+
+// Récupérer les médicaments associés aux soins d'un patient
+app.get('/afficherMedicamentsPatient/:idPatient', async (req, res) => {
+  const idPatient = req.params.idPatient;
+
+  try {
+    const medicaments = await getMedic_patient(idPatient);  // ta fonction SQL existante
+    res.send(medicaments); // envoie direct au frontend
+  } catch (error) {
+    console.error('Erreur lors de la récupération des médicaments du patient :', error);
+    res.status(500).send('Erreur lors de la récupération des médicaments');
+  }
+});
+
+app.get('/afficherDetailReunion/:idSoin', async (req, res) => {
+  const idSoin = req.params.idSoin;
+
+  try {
+    const reunion = await getDetailReunionSoin(idSoin);
+    
+    if (!reunion || reunion.length === 0) {
+      return res.status(404).send('Aucune réunion trouvée pour ce soin');
+    }
+
+    res.send(reunion[0]); // On renvoie un seul objet
+  } catch (error) {
+    console.error('Erreur lors de la récupération des détails de réunion :', error);
+    res.status(500).send('Erreur lors de la récupération de la réunion');
+  }
+});
 
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
@@ -332,7 +372,6 @@ app.get("/afficherSoinsAEffectuer/:idInfirmier", async (req, res) => {
   
   res.send(soinsAEffectuer);
 });
-
 
 //Personnel net_____________________________________________________________________________________
 app.get("/chambresNonNettoyees", async (req, res) => {
