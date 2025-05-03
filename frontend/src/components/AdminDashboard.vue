@@ -46,6 +46,21 @@
         >
           Afficher Patients
         </button>
+        <button 
+          @click="activeComponent = 'litsDispo'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'litsDispo'}"
+        >
+          Afficher lits Disponibles
+        </button>
+        <button 
+          @click="activeComponent = 'ChambresVides'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'ChambresVides'}"
+        >
+          Afficher Chambres Vides
+        </button>
+        
       </nav>
     </div>
 
@@ -68,7 +83,8 @@ import ListeMedecins from "./Admin/ListeMedecins.vue";
 import ListPersAdmin from "./Admin/ListPersAdmin.vue";
 import ListPersNet from "./Admin/ListPersNet.vue";
 import ListePatients from "./Admin/ListePatients.vue";
-
+import litsDispo from "./Admin/litsDispo.vue";
+import ChambresVides from "./Admin/ChambresVides.vue";
 export default {
   name: "AdminDashboard",
   components: {
@@ -78,6 +94,8 @@ export default {
     ListPersNet,
     AjouterMedecin,
     ListePatients,
+    litsDispo,
+    ChambresVides,
   },
   data() {
     return {
