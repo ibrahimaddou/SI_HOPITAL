@@ -60,6 +60,13 @@
         >
           Afficher Chambres Vides
         </button>
+        <button 
+          @click="activeComponent = 'ChambresNonNett'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'ChambresNonNett'}"
+        >
+          Afficher Chambres Non Nettoyer
+        </button>
         
       </nav>
     </div>
@@ -85,6 +92,8 @@ import ListPersNet from "./Admin/ListPersNet.vue";
 import ListePatients from "./Admin/ListePatients.vue";
 import litsDispo from "./Admin/litsDispo.vue";
 import ChambresVides from "./Admin/ChambresVides.vue";
+import ChambresNonNett from "./Admin/ChambresNonNett.vue";
+
 export default {
   name: "AdminDashboard",
   components: {
@@ -96,6 +105,7 @@ export default {
     ListePatients,
     litsDispo,
     ChambresVides,
+    ChambresNonNett,
   },
   data() {
     return {
