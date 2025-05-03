@@ -67,6 +67,20 @@
         >
           Afficher Chambres Non Nettoyer
         </button>
+        <button 
+          @click="activeComponent = 'PatientsRetardSortie'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'PatientsRetardSortie'}"
+        >
+          Afficher PatientsRetardSortie
+        </button>
+        <button 
+          @click="activeComponent = 'EtatOccupService'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'EtatOccupService'}"
+        >
+          Afficher l'état d'occupation des services
+        </button>
         
       </nav>
     </div>
@@ -93,6 +107,8 @@ import ListePatients from "./Admin/ListePatients.vue";
 import litsDispo from "./Admin/litsDispo.vue";
 import ChambresVides from "./Admin/ChambresVides.vue";
 import ChambresNonNett from "./Admin/ChambresNonNett.vue";
+import PatientsRetardSortie from "./Admin/PatientsRetardSortie.vue";
+import EtatOccupService from "./Admin/EtatOccupService.vue";
 
 export default {
   name: "AdminDashboard",
@@ -106,6 +122,8 @@ export default {
     litsDispo,
     ChambresVides,
     ChambresNonNett,
+    PatientsRetardSortie,
+    EtatOccupService,
   },
   data() {
     return {
