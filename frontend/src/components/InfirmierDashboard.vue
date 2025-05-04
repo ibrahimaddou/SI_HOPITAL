@@ -39,6 +39,14 @@
         >
         Ajouter Administration Soin
         </button>
+        <button 
+          @click="activeComponent = 'AfficherMedecaments'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AfficherMedecaments'}"
+        >
+        Afficher Medecaments
+        </button>
+        
       </nav>
     </div>
 
@@ -58,6 +66,7 @@ import AfficherSoinsAEffectuer from "./Infirmier/AfficherSoinsAEffectuer.vue";
 import AfficherAdminSoin from "./Infirmier/AfficherAdminSoin.vue";
 import afficherSoinsPatient from "./Infirmier/afficherSoinsPatient.vue";
 import AjouterAdminSoin from "./Infirmier/AjouterAdminSoin.vue";
+import AfficherMedecaments from "./Infirmier/AfficherMedecaments.vue";
 
 export default {
   name: "InfirmierDashboard",
@@ -67,6 +76,7 @@ export default {
     AfficherAdminSoin,
     afficherSoinsPatient,
     AjouterAdminSoin,
+    AfficherMedecaments,
 
     
   },
