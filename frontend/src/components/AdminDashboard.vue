@@ -4,160 +4,254 @@
     <div class="sidebar">
       <h2 class="sidebar-title">Administration</h2>
       <nav class="sidebar-nav">
-        <button 
-          @click="activeComponent = 'ListeMedecins'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ListeMedecins'}"
-        >
-          Liste des Médecins
-        </button>
-        <button 
-          @click="activeComponent = 'AjouterMedecin'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AjouterMedecin'}"
-        >
-          Ajouter un Médecin
-        </button>
-        <button 
-          @click="activeComponent = 'ListeInfirm'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ListeInfirm'}"
-        >
-          Liste des Infirmiers
-        </button>
-        <button 
-          @click="activeComponent = 'ListPersAdmin'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ListPersAdmin'}"
-        >
-          Personnel Administratif
-        </button>
-        <button 
-          @click="activeComponent = 'ListPersNet'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ListPersNet'}"
-        >
-          Personnel d'Entretien
-        </button>
-        <button 
-          @click="activeComponent = 'ListePatients'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ListePatients'}"
-        >
-          Afficher Patients
-        </button>
-        <button 
-          @click="activeComponent = 'litsDispo'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'litsDispo'}"
-        >
-          Afficher lits Disponibles
-        </button>
-        <button 
-          @click="activeComponent = 'ChambresVides'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ChambresVides'}"
-        >
-          Afficher Chambres Vides
-        </button>
-        <button 
-          @click="activeComponent = 'ChambresNonNett'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ChambresNonNett'}"
-        >
-          Afficher Chambres Non Nettoyer
-        </button>
-        <button 
-          @click="activeComponent = 'PatientsRetardSortie'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'PatientsRetardSortie'}"
-        >
-          Afficher PatientsRetardSortie
-        </button>
-        <button 
-          @click="activeComponent = 'EtatOccupService'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'EtatOccupService'}"
-        >
-          Afficher l'état d'occupation des services
-        </button>
-        <button 
-          @click="activeComponent = 'AjouterPersAdmin'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AjouterPersAdmin'}"
-        >
-        Ajouter Personnel Administratif
-        </button>
-        <button 
-          @click="activeComponent = 'AjouterPersNett'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AjouterPersNett'}"
-        >
-        Ajouter Personnel nettoyage
-        </button>
-        <button 
-          @click="activeComponent = 'AjouterInfirmier'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AjouterInfirmier'}"
-        >
-        Ajouter Infirmier
-        </button>
-        <button 
-          @click="activeComponent = 'AjouterSejour'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AjouterSejour'}"
-        >
-        Ajouter Infirmier
-        </button>
-        <button 
-          @click="activeComponent = 'AfficherServices'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'AfficherServices'}"
-        >
-        Afficher Services
-        </button>
-        <button 
-          @click="activeComponent = 'SupprimerPatient'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'SupprimerPatient'}"
-        >
-        Supprimer Patient
-        </button>
-        <button 
-          @click="activeComponent = 'SupprimerSejour'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'SupprimerSejour'}"
-        >
-        Supprimer Sejour
-        </button>
-        <button 
-          @click="activeComponent = 'SupprimerSoin'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'SupprimerSoin'}"
-        >
-        Supprimer Soin
-        </button>
-        <button 
-          @click="activeComponent = 'SupprimerVisiteMed'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'SupprimerVisiteMed'}"
-        >
-        Supprimer Visite Medicale
-        </button>
-        
-        <button 
-          @click="activeComponent = 'ModifierDateSortiePatient'"
-          class="nav-button"
-          :class="{'active': activeComponent === 'ModifierDateSortiePatient'}"
-        >
-        Modifier DateSortie Patient
-        </button>
-        
-        
+        <!-- Catégorie Gestion des Médecins -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('medecins')"
+            :class="{'active': openCategories.medecins}"
+          >
+            <span>Gestion des Médecins</span>
+            <span class="icon">{{ openCategories.medecins ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.medecins">
+            <button 
+              @click="activeComponent = 'ListeMedecins'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ListeMedecins'}"
+            >
+              Liste des Médecins
+            </button>
+            <button 
+              @click="activeComponent = 'AjouterMedecin'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AjouterMedecin'}"
+            >
+              Ajouter un Médecin
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Gestion des Infirmiers -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('infirmiers')"
+            :class="{'active': openCategories.infirmiers}"
+          >
+            <span>Gestion des Infirmiers</span>
+            <span class="icon">{{ openCategories.infirmiers ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.infirmiers">
+            <button 
+              @click="activeComponent = 'ListeInfirm'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ListeInfirm'}"
+            >
+              Liste des Infirmiers
+            </button>
+            <button 
+              @click="activeComponent = 'AjouterInfirmier'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AjouterInfirmier'}"
+            >
+              Ajouter un Infirmier
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Personnel Administratif -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('admin')"
+            :class="{'active': openCategories.admin}"
+          >
+            <span>Personnel Administratif</span>
+            <span class="icon">{{ openCategories.admin ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.admin">
+            <button 
+              @click="activeComponent = 'ListPersAdmin'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ListPersAdmin'}"
+            >
+              Liste du Personnel
+            </button>
+            <button 
+              @click="activeComponent = 'AjouterPersAdmin'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AjouterPersAdmin'}"
+            >
+              Ajouter du Personnel
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Personnel d'Entretien -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('nettoyage')"
+            :class="{'active': openCategories.nettoyage}"
+          >
+            <span>Personnel d'Entretien</span>
+            <span class="icon">{{ openCategories.nettoyage ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.nettoyage">
+            <button 
+              @click="activeComponent = 'ListPersNet'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ListPersNet'}"
+            >
+              Liste du Personnel
+            </button>
+            <button 
+              @click="activeComponent = 'AjouterPersNett'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AjouterPersNett'}"
+            >
+              Ajouter du Personnel
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Gestion des Patients -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('patients')"
+            :class="{'active': openCategories.patients}"
+          >
+            <span>Gestion des Patients</span>
+            <span class="icon">{{ openCategories.patients ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.patients">
+            <button 
+              @click="activeComponent = 'ListePatients'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ListePatients'}"
+            >
+              Liste des Patients
+            </button>
+            <button 
+              @click="activeComponent = 'PatientsRetardSortie'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'PatientsRetardSortie'}"
+            >
+              Patients en Retard de Sortie
+            </button>
+            <button 
+              @click="activeComponent = 'ModifierDateSortiePatient'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ModifierDateSortiePatient'}"
+            >
+              Modifier Date de Sortie
+            </button>
+            <button 
+              @click="activeComponent = 'SupprimerPatient'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'SupprimerPatient'}"
+            >
+              Supprimer Patient
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Organisation -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('organisation')"
+            :class="{'active': openCategories.organisation}"
+          >
+            <span>Organisation</span>
+            <span class="icon">{{ openCategories.organisation ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.organisation">
+            <button 
+              @click="activeComponent = 'litsDispo'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'litsDispo'}"
+            >
+              Lits Disponibles
+            </button>
+            <button 
+              @click="activeComponent = 'ChambresVides'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ChambresVides'}"
+            >
+              Chambres Vides
+            </button>
+            <button 
+              @click="activeComponent = 'ChambresNonNett'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'ChambresNonNett'}"
+            >
+              Chambres Non Nettoyées
+            </button>
+            <button 
+              @click="activeComponent = 'AfficherServices'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AfficherServices'}"
+            >
+              Liste des Services
+            </button>
+            <button 
+              @click="activeComponent = 'EtatOccupService'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'EtatOccupService'}"
+            >
+              Occupation des Services
+            </button>
+          </div>
+        </div>
+
+        <!-- Catégorie Gestion des Séjours -->
+        <div class="nav-category">
+          <div 
+            class="category-header" 
+            @click="toggleCategory('sejours')"
+            :class="{'active': openCategories.sejours}"
+          >
+            <span>Gestion des Séjours</span>
+            <span class="icon">{{ openCategories.sejours ? '▼' : '►' }}</span>
+          </div>
+          <div class="category-content" v-show="openCategories.sejours">
+            <button 
+              @click="activeComponent = 'AjouterSejour'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'AjouterSejour'}"
+            >
+              Ajouter Séjour
+            </button>
+            <button 
+              @click="activeComponent = 'SupprimerSejour'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'SupprimerSejour'}"
+            >
+              Supprimer Séjour
+            </button>
+            <button 
+              @click="activeComponent = 'SupprimerSoin'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'SupprimerSoin'}"
+            >
+              Supprimer Soin
+            </button>
+            <button 
+              @click="activeComponent = 'SupprimerVisiteMed'"
+              class="nav-button sub-item"
+              :class="{'active': activeComponent === 'SupprimerVisiteMed'}"
+            >
+              Supprimer Visite Médicale
+            </button>
+          </div>
+        </div>
       </nav>
     </div>
 
-    <!-- Contenu  à droite -->
+    <!-- Contenu à droite -->
     <div class="main-content">
       <h1 class="page-title">Tableau de bord administrateur</h1>
       
@@ -219,7 +313,16 @@ export default {
   },
   data() {
     return {
-      activeComponent: 'ListeMedecins' // Composant affiché par défaut
+      activeComponent: 'ListeMedecins', // Composant affiché par défaut
+      openCategories: {
+        medecins: true,  // Catégorie ouverte par défaut
+        infirmiers: false,
+        admin: false,
+        nettoyage: false,
+        patients: false,
+        organisation: false,
+        sejours: false
+      }
     }
   },
   methods: {
@@ -227,6 +330,10 @@ export default {
       // Après l'ajout d'un médecin, revenir à la liste des médecins
       this.activeComponent = 'ListeMedecins';
     },
+    toggleCategory(category) {
+      // Toggle la visibilité de la catégorie
+      this.openCategories[category] = !this.openCategories[category];
+    }
   }
 }
 </script>
@@ -238,10 +345,11 @@ export default {
 }
 
 .sidebar {
-  width: 250px;
+  width: 280px;
   background-color: #2c3e50; 
   color: white;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .sidebar-title {
@@ -253,7 +361,36 @@ export default {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+}
+
+.nav-category {
+  margin-bottom: 4px;
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: #34495e;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.category-header:hover {
+  background-color: #3d5366;
+}
+
+.category-header.active {
+  background-color: #2980b9;
+}
+
+.category-content {
+  padding-left: 10px;
+  margin-top: 2px;
 }
 
 .nav-button {
@@ -266,6 +403,11 @@ export default {
   border: none;
   cursor: pointer;
   transition: background-color 0.3s;
+}
+
+.nav-button.sub-item {
+  padding-left: 20px;
+  font-size: 0.95rem;
 }
 
 .nav-button:hover {
@@ -294,5 +436,9 @@ export default {
   padding: 24px;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.icon {
+  font-size: 0.8rem;
 }
 </style>
