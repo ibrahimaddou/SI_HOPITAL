@@ -137,6 +137,13 @@
         >
         Supprimer Soin
         </button>
+        <button 
+          @click="activeComponent = 'SupprimerVisiteMed'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'SupprimerVisiteMed'}"
+        >
+        Supprimer Visite Medicale
+        </button>
         
         
         
@@ -176,6 +183,7 @@ import AfficherServices from "./Admin/AfficherServices.vue";
 import SupprimerPatient from "./Admin/SupprimerPatient.vue";
 import SupprimerSejour from "./Admin/SupprimerSejour.vue";
 import SupprimerSoin from "./Admin/SupprimerSoin.vue";
+import SupprimerVisiteMed from "./Admin/SupprimerVisiteMed.vue";
 
 export default {
   name: "AdminDashboard",
@@ -199,6 +207,7 @@ export default {
     SupprimerPatient,
     SupprimerSejour,
     SupprimerSoin,
+    SupprimerVisiteMed,
   },
   data() {
     return {

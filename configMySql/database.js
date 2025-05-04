@@ -1296,7 +1296,33 @@ export async function getDetailReunionSoin(idSoin) {
   
   return rows;
 }
-
+export async function getVisitesMedicales() {
+  const [visites] = await pool.query(`
+    SELECT 
+    vm.id_visite,
+    vm.date_visite,
+    vm.examens_pratiques,
+    vm.commentaires,
+    
+    p_patient.id_personne AS id_patient,
+    p_patient.nom AS nom_patient,
+    p_patient.prenom AS prenom_patient,
+    p_patient.date_naissance AS date_naissance_patient,
+    
+    p_medecin.id_personne AS id_medecin,
+    p_medecin.nom AS nom_medecin,
+    p_medecin.prenom AS prenom_medecin,
+    m.specialite AS specialite_medecin
+    
+FROM Visite_Medicale vm
+JOIN Patient pt ON vm.id_patient = pt.id_patient
+JOIN Personne p_patient ON pt.id_patient = p_patient.id_personne
+JOIN Medecin m ON vm.id_medecin = m.id_medecin
+JOIN Personne p_medecin ON m.id_medecin = p_medecin.id_personne
+ORDER BY vm.date_visite DESC;
+    `);
+  return visites;
+}
 
 /*export async function () {
   const [rows] = await pool.query(`

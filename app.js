@@ -8,7 +8,8 @@ import {
     ajouterInfirmier,ajouterSejour,getServices,getChambresParService,
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
-    supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,getDossierPatient, getMedic_patient, getDetailReunionSoin
+    supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
+    getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -310,8 +311,8 @@ app.get("/reunions", async (req, res) => {
 app.get('/patient/dossier/:idPatient', async (req, res) => {
   const idPatient = req.params.idPatient;
   try {
-    const dossier = await getDossierPatient(idPatient);  // Ta fonction pour récupérer les données
-    res.json(dossier);  // Renvoie les données au frontend
+    const dossier = await getDossierPatient(idPatient);  
+    res.json(dossier);  
   } catch (error) {
     res.status(500).send('Erreur lors de la récupération du dossier');
   }
@@ -322,8 +323,8 @@ app.get('/afficherMedicamentsPatient/:idPatient', async (req, res) => {
   const idPatient = req.params.idPatient;
 
   try {
-    const medicaments = await getMedic_patient(idPatient);  // ta fonction SQL existante
-    res.send(medicaments); // envoie direct au frontend
+    const medicaments = await getMedic_patient(idPatient);  
+    res.send(medicaments); 
   } catch (error) {
     console.error('Erreur lors de la récupération des médicaments du patient :', error);
     res.status(500).send('Erreur lors de la récupération des médicaments');
@@ -346,6 +347,11 @@ app.get('/afficherDetailReunion/:idSoin', async (req, res) => {
     res.status(500).send('Erreur lors de la récupération de la réunion');
   }
 });
+app.get("/afficherVisitesMedicales", async (req, res) => {
+  const visites = await getVisitesMedicales();
+  res.send(visites)
+});
+
 
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
