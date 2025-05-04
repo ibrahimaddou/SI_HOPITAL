@@ -145,7 +145,13 @@
         Supprimer Visite Medicale
         </button>
         
-        
+        <button 
+          @click="activeComponent = 'ModifierDateSortiePatient'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'ModifierDateSortiePatient'}"
+        >
+        Modifier DateSortie Patient
+        </button>
         
         
       </nav>
@@ -184,6 +190,7 @@ import SupprimerPatient from "./Admin/SupprimerPatient.vue";
 import SupprimerSejour from "./Admin/SupprimerSejour.vue";
 import SupprimerSoin from "./Admin/SupprimerSoin.vue";
 import SupprimerVisiteMed from "./Admin/SupprimerVisiteMed.vue";
+import ModifierDateSortiePatient from "./Admin/ModifierDateSortiePatient.vue";
 
 export default {
   name: "AdminDashboard",
@@ -208,6 +215,7 @@ export default {
     SupprimerSejour,
     SupprimerSoin,
     SupprimerVisiteMed,
+    ModifierDateSortiePatient,
   },
   data() {
     return {

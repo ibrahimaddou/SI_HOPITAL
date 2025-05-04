@@ -8,7 +8,7 @@ import InfirmierDashboard from '@/components/InfirmierDashboard.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/acceuil'
+    redirect: '/Acceuil'
   },
   {
     path: '/login',
@@ -61,7 +61,7 @@ router.beforeEach((to) => {
   
   // Si l'utilisateur n'est pas authentifié
   if (to.meta.requiresAuth && !isAuthenticated) {
-    return { path: '/accueil', query: { redirect: to.fullPath } };
+    return { path: '/Accueil', query: { redirect: to.fullPath } };
   }
   
   if (isAuthenticated && to.meta.role) {
@@ -72,7 +72,7 @@ router.beforeEach((to) => {
       if (payload.exp && payload.exp < Date.now() / 1000) {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
-        return { path: '/accueil', query: { reason: 'session_expired' } };
+        return { path: '/Accueil', query: { reason: 'session_expired' } };
       }
       
       // vérification du rôle
