@@ -88,7 +88,13 @@
         >
         Ajouter Personnel Administratif
         </button>
-        
+        <button 
+          @click="activeComponent = 'AjouterPersNett'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AjouterPersNett'}"
+        >
+        Ajouter Personnel nettoyage
+        </button>
       </nav>
     </div>
 
@@ -117,6 +123,7 @@ import ChambresNonNett from "./Admin/ChambresNonNett.vue";
 import PatientsRetardSortie from "./Admin/PatientsRetardSortie.vue";
 import EtatOccupService from "./Admin/EtatOccupService.vue";
 import AjouterPersAdmin from "./Admin/AjouterPersAdmin.vue";
+import AjouterPersNett from "./Admin/AjouterPersNett.vue";
 
 export default {
   name: "AdminDashboard",
@@ -133,6 +140,7 @@ export default {
     PatientsRetardSortie,
     EtatOccupService,
     AjouterPersAdmin,
+    AjouterPersNett,
   },
   data() {
     return {
