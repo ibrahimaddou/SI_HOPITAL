@@ -562,7 +562,7 @@ app.post('/login', async (req, res) => {
         }
         
     
-        if (!['admin', 'medecin', 'infirmier'].includes(userType)) {
+        if (!['admin', 'medecin', 'infirmier','personnelNett'].includes(userType)) {
           return res.status(400).json({ message: 'Type d\'utilisateur invalide' });
         }
         
