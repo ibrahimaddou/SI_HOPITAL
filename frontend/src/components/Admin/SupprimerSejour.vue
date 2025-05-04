@@ -326,7 +326,7 @@
         
         this.annulationEnCours = true;
         
-        axios.delete(`http://localhost:3002/sejours/${this.sejourAnnuler.id_sejour}`, {
+        axios.delete(`http://localhost:3002/supprimerSejour/${this.sejourAnnuler.id_sejour}`, {
           data: { motif_annulation: this.motifAnnulation }
         })
           .then(() => {

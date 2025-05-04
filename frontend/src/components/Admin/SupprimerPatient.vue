@@ -208,7 +208,7 @@
         this.suppressionEnCours = true;
         this.message = "";
         
-        axios.delete(`http://localhost:3002/patients/${this.idPatientSelectionne}`)
+        axios.delete(`http://localhost:3002/supprimerPatients/${this.idPatientSelectionne}`)
           .then(() => {
             this.afficherMessage("Le patient et toutes ses données associées ont été supprimés avec succès", "success");
             this.reinitialiser();
