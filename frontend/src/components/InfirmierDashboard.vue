@@ -11,14 +11,21 @@
         >
           Liste des Patients
         </button>
-        
         <button 
-          @click="activeComponent = 'DossiersMedicaux'"
+          @click="activeComponent = 'AfficherSoinsAEffectuer'"
           class="nav-button"
-          :class="{'active': activeComponent === 'DossiersMedicaux'}"
+          :class="{'active': activeComponent === 'AfficherSoinsAEffectuer'}"
         >
-          Dossiers Médicaux
+        Afficher Soins AEffectuer
         </button>
+        <button 
+          @click="activeComponent = 'AfficherAdminSoin'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AfficherAdminSoin'}"
+        >
+        Afficher Administration Soin
+          </button>
+        
       </nav>
     </div>
 
@@ -34,14 +41,17 @@
 
 <script>
 import ListPatient from "./Medecin/ListPatient.vue";
-// import DossiersMedicaux from "./Infirmier/DossiersMedicaux.vue";
+import AfficherSoinsAEffectuer from "./Infirmier/AfficherSoinsAEffectuer.vue";
+import AfficherAdminSoin from "./Infirmier/AfficherAdminSoin.vue";
 
 export default {
   name: "InfirmierDashboard",
   components: {
     ListPatient,
+    AfficherSoinsAEffectuer,
+    AfficherAdminSoin,
 
-    // DossiersMedicaux,
+    
   },
   data() {
     return {

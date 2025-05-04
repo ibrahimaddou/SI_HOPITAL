@@ -100,7 +100,7 @@ export default {
       this.erreur = null;
 
       axios
-        .get("http://localhost:3002/patient")
+        .get("http://localhost:3002/patients")
         .then((response) => {
           // Vérifiez la structure de votre réponse
           if (response.data && response.data.patients) {
