@@ -17,6 +17,7 @@
               <option value="admin">Administrateur</option>
               <option value="medecin">Médecin</option>
               <option value="infirmier">Infirmier</option>
+              <option value="personnelNett">Personnel nettoyage</option>
             </select>
           </div>
           
@@ -94,6 +95,8 @@
             this.$router.push('/medecin/dashboard');
           } else if (response.data.user.role === 'infirmier') {
             this.$router.push('/infirmier/dashboard');
+          }else if (response.data.user.role === 'personnelNett') {
+            this.$router.push('/personnelNett/dashboard');
           }
           
         } catch (error) {

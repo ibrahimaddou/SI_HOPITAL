@@ -43,8 +43,17 @@ const routes = [
       role: 'infirmier'
     }
   },
+  {
+    path: '/personnelNett/dashboard',
+    name: 'Personnel Nettoyage Dashboard',
+    component: PersonnelNettDashboard,
+    meta: {
+      requiresAuth: true,
+      role: 'personnelNett'
+    }
+  },
 
-
+  
   
 ]
 
