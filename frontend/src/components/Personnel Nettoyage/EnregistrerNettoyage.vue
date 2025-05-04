@@ -171,7 +171,7 @@
         };
         
         axios.post("http://localhost:3002/enregistrerNettoyage", donnees)
-          .then(response => {
+          .then(() => {
             this.message = "Nettoyage enregistré avec succès !";
             // Réinitialiser le formulaire
             this.formulaire = {

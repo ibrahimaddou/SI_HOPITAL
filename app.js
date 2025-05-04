@@ -579,6 +579,9 @@ app.post('/login', async (req, res) => {
           case 'infirmier':
             table = 'infirmier';
             break;
+          case 'personnelNett':
+              table = 'Personnel_Nettoyage';
+              break;
         }
         
         const result = await connection.execute(`SELECT * FROM ${table} WHERE username = ?`, [username]);

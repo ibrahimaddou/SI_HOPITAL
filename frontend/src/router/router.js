@@ -3,6 +3,7 @@ import Login from '../components/Login.vue'
 import AdminDashboard from '@/components/AdminDashboard.vue'
 import MedecinDashboard from '@/components/MedecinDashboard.vue'
 import InfirmierDashboard from '@/components/InfirmierDashboard.vue'
+import PersonnelNettDashboard from '@/components/PersonnelNettDashboard.vue'
 
 
 const routes = [

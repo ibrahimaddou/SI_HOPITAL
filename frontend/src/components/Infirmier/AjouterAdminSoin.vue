@@ -267,7 +267,7 @@
         };
         
         axios.post("http://localhost:3002/administrationSoin", donnees)
-          .then(response => {
+          .then(() => {
             this.messageSucces = "Administration de soin enregistrée avec succès !";
             this.reinitialiserFormulaire();
           })
