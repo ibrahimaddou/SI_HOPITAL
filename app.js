@@ -429,6 +429,15 @@ app.post("/administrationSoin", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout d'administration de soin" });
   }
 });
+app.get("/afficherSoinsPatient/:idPatient", async (req, res) => {
+  try {
+    const soinsPatient = await getSoinsPatient(req.params.idPatient);
+    res.send(soinsPatient);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des soins:", error);
+    res.status(500).send("Erreur serveur");
+  }
+});
 //Req Delete_______________________________________________________________________________________
 app.delete("/supprimerPatients/:idPatient", async (req, res) => {
   try {

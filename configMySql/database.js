@@ -1323,7 +1323,20 @@ ORDER BY vm.date_visite DESC;
     `);
   return visites;
 }
-
+export async function getSoinsPatient(idPatient) {
+  const [soins] = await pool.query(`
+    SELECT s.id_soin, s.description, r.date_reunion, r.sujet,
+           ms.id_medicament, m.nom AS nom_medicament, m.description AS description_medicament, 
+           m.dosage, ms.quantite
+    FROM Soin s
+    JOIN Reunion r ON s.id_reunion_decision = r.id_reunion
+    LEFT JOIN Medicament_Soin ms ON s.id_soin = ms.id_soin
+    LEFT JOIN Medicament m ON ms.id_medicament = m.id_medicament
+    WHERE s.id_patient = ?
+  `, [idPatient]);
+  
+  return soins;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
