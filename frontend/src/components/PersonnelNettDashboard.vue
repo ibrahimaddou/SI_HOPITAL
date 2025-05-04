@@ -11,6 +11,13 @@
           >
           Afficher Cahmbres A Nettoyer
           </button>
+          <button 
+            @click="activeComponent = 'EnregistrerNettoyage'"
+            class="nav-button"
+            :class="{'active': activeComponent === 'EnregistrerNettoyage'}"
+          >
+          Enregistrer Nettoyage
+          </button>
           
         </nav>
       </div>
@@ -27,11 +34,13 @@
   
   <script>
  import AfficherCahmbresANett from './Personnel Nettoyage/AfficherCahmbresANett.vue';
+ import EnregistrerNettoyage from './Personnel Nettoyage/EnregistrerNettoyage.vue';
    
   export default {
     name: "NettoyageDashboard",
     components: {
         AfficherCahmbresANett,
+        EnregistrerNettoyage,
     },
     data() {
       return {
