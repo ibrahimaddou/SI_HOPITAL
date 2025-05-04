@@ -102,6 +102,13 @@
         >
         Ajouter Infirmier
         </button>
+        <button 
+          @click="activeComponent = 'AjouterSejour'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AjouterSejour'}"
+        >
+        Ajouter Infirmier
+        </button>
         
       </nav>
     </div>
@@ -133,6 +140,7 @@ import EtatOccupService from "./Admin/EtatOccupService.vue";
 import AjouterPersAdmin from "./Admin/AjouterPersAdmin.vue";
 import AjouterPersNett from "./Admin/AjouterPersNett.vue";
 import AjouterInfirmier from "./Admin/AjouterInfirmier.vue";
+import AjouterSejour from "./Admin/AjouterSejour.vue";
 
 export default {
   name: "AdminDashboard",
@@ -151,6 +159,7 @@ export default {
     AjouterPersAdmin,
     AjouterPersNett,
     AjouterInfirmier,
+    AjouterSejour,
   },
   data() {
     return {
