@@ -1445,7 +1445,49 @@ export async function ajouterVisiteMedicale(
     prescriptions: prescriptionsResult
   };
 }
-
+export async function ajouterReunion(dateReunion, sujet, compteRendu, medecinIds, infirmierIds) {
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    const [resultReunion] = await connection.query(`
+      INSERT INTO Reunion (date_reunion, sujet, compte_rendu)
+      VALUES (?, ?, ?);
+    `, [dateReunion, sujet, compteRendu]);
+    
+    const idReunion = resultReunion.insertId;
+    
+    // Ajout des médecins participants
+    if (medecinIds && medecinIds.length > 0) {
+      for (const idMedecin of medecinIds) {
+        await connection.query(`
+          INSERT INTO Participation_Medecin_Reunion (id_medecin, id_reunion)
+          VALUES (?, ?);
+        `, [idMedecin, idReunion]);
+      }
+    }
+    
+    // Ajout des infirmiers participants
+    if (infirmierIds && infirmierIds.length > 0) {
+      for (const idInfirmier of infirmierIds) {
+        await connection.query(`
+          INSERT INTO Participation_Infirmier_Reunion (id_infirmier, id_reunion)
+          VALUES (?, ?);
+        `, [idInfirmier, idReunion]);
+      }
+    }
+    
+    await connection.commit();
+    return { id: idReunion, dateReunion, sujet, compteRendu };
+    
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

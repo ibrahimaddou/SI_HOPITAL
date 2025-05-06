@@ -405,6 +405,27 @@ app.post("/ajouterVisiteMedicale", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout de la visite médicale" });
   }
 });
+app.post("/reunions", async (req, res) => {
+  try {
+    const { dateReunion, sujet, compteRendu, medecinIds, infirmierIds } = req.body;
+    
+    if (!dateReunion || !sujet) {
+      return res.status(400).send({ error: "La date et le sujet de la réunion sont obligatoires" });
+    }
+    
+    const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+    if (!dateRegex.test(dateReunion)) {
+      return res.status(400).send({ error: "Format de date invalide. Utilisez le format ISO (YYYY-MM-DDTHH:MM:SS)" });
+    }
+    
+    const reunion = await ajouterReunion(dateReunion, sujet, compteRendu, medecinIds, infirmierIds);
+    
+    res.status(201).send(reunion);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de la réunion! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout de la réunion" });
+  }
+});
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
   try {
