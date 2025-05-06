@@ -10,7 +10,7 @@ import {
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,
+    getVisitesByMedecin,modifierSoin
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -484,6 +484,8 @@ app.post("/soins", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout du soin" });
   }
 });
+
+app.put("/modifierSoin/:idSoin", modifierSoin);
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
   try {

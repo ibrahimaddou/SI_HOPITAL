@@ -1557,6 +1557,166 @@ export async function ajouterSoin(description, idPatient, idReunionDecision, med
   }
 }
 
+export async function modifierSoin(req, res) {
+  const idSoin = req.params.idSoin;
+  const { description, id_patient, id_reunion_decision, medicaments } = req.body;
+  
+  if (!description || !id_patient || !id_reunion_decision) {
+    return res.status(400).json({
+      success: false,
+      message: "La description, l'ID du patient et l'ID de la réunion de décision sont requis"
+    });
+  }
+  
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    //vérification si le soin existe
+    const [soin] = await connection.query(
+      "SELECT * FROM Soin WHERE id_soin = ?",
+      [idSoin]
+    );
+    
+    if (soin.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({
+        success: false,
+        message: "Soin non trouvé"
+      });
+    }
+    
+    //si le patient existe
+    const [patient] = await connection.query(
+      "SELECT * FROM Patient WHERE id_patient = ?",
+      [id_patient]
+    );
+    
+    if (patient.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({
+        success: false,
+        message: "Patient non trouvé"
+      });
+    }
+    
+    //si la réunion existe
+    const [reunion] = await connection.query(
+      "SELECT * FROM Reunion WHERE id_reunion = ?",
+      [id_reunion_decision]
+    );
+    
+    if (reunion.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(404).json({
+        success: false,
+        message: "Réunion non trouvée"
+      });
+    }
+    
+    // MAJ les informations du soin
+    await connection.query(
+      "UPDATE Soin SET description = ?, id_patient = ?, id_reunion_decision = ? WHERE id_soin = ?",
+      [description, id_patient, id_reunion_decision, idSoin]
+    );
+    
+    // Si des médicaments sont fournis, MAJ les associations
+    if (medicaments && Array.isArray(medicaments)) {
+      // suppr les associations existantes
+      await connection.query(
+        "DELETE FROM Medicament_Soin WHERE id_soin = ?",
+        [idSoin]
+      );
+      
+      // Ajout des nouvelles associations
+      for (const med of medicaments) {
+        if (!med.id_medicament || !med.quantite) {
+          await connection.rollback();
+          connection.release();
+          return res.status(400).json({
+            success: false,
+            message: "Chaque médicament doit avoir un ID et une quantité"
+          });
+        }
+        
+        const [medicament] = await connection.query(
+          "SELECT * FROM Medicament WHERE id_medicament = ?",
+          [med.id_medicament]
+        );
+        
+        if (medicament.length === 0) {
+          await connection.rollback();
+          connection.release();
+          return res.status(404).json({
+            success: false,
+            message: `Médicament avec ID ${med.id_medicament} non trouvé`
+          });
+        }
+        
+        await connection.query(
+          "INSERT INTO Medicament_Soin (id_soin, id_medicament, quantite) VALUES (?, ?, ?)",
+          [idSoin, med.id_medicament, med.quantite]
+        );
+      }
+    }
+    
+    await connection.commit();
+    
+    const [soinModifie] = await connection.query(`
+      SELECT 
+        s.id_soin, 
+        s.description, 
+        s.id_patient, 
+        p.nom as nom_patient, 
+        p.prenom as prenom_patient,
+        s.id_reunion_decision,
+        r.date_reunion, 
+        r.sujet as sujet_reunion
+      FROM Soin s
+      JOIN Patient pt ON s.id_patient = pt.id_patient
+      JOIN Personne p ON pt.id_patient = p.id_personne
+      JOIN Reunion r ON s.id_reunion_decision = r.id_reunion
+      WHERE s.id_soin = ?
+    `, [idSoin]);
+    
+    const [medicamentsAssocies] = await connection.query(`
+      SELECT 
+        ms.id_medicament,
+        m.nom as nom_medicament, 
+        m.description as desc_medicament, 
+        m.dosage, 
+        ms.quantite
+      FROM Medicament_Soin ms
+      JOIN Medicament m ON ms.id_medicament = m.id_medicament
+      WHERE ms.id_soin = ?
+    `, [idSoin]);
+    
+    res.status(200).json({
+      success: true,
+      message: "Soin modifié avec succès",
+      soin: {
+        ...soinModifie[0],
+        medicaments: medicamentsAssocies
+      }
+    });
+    
+  } catch (error) {
+    // annulation en cas d'erreur
+    await connection.rollback();
+    console.error("Erreur lors de la modification du soin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la modification du soin",
+      error: error.message
+    });
+  } finally {
+    connection.release();
+  }
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);
