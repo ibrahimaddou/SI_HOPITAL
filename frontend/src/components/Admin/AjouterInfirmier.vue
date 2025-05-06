@@ -28,15 +28,7 @@
               />
             </div>
             
-            <div class="mb-3">
-              <label class="block mb-1">Date de naissance *</label>
-              <input 
-                v-model="personnel.date_naissance" 
-                type="date" 
-                required
-                class="w-full p-2 border rounded"
-              />
-            </div>
+           
             
             <div class="mb-3">
               <label class="block mb-1">Adresse</label>
@@ -172,18 +164,30 @@
     methods: {
       soumettreFormulaire() {
         // Vérification des champs obligatoires
-        if (!this.personnel.nom || !this.personnel.prenom || !this.personnel.date_naissance || 
-            !this.personnel.date_embauche || !this.personnel.qualification || !this.personnel.id_service || 
-            !this.personnel.username || !this.personnel.mot_de_passe) {
+        if (!this.personnel.nom || !this.personnel.prenom || 
+        !this.personnel.date_embauche || !this.personnel.mot_de_passe) {
           this.afficherMessage("Veuillez remplir tous les champs obligatoires", "error");
           return;
         }
         
         this.envoiEnCours = true;
         this.message = "";
+
+        const infirmierData = {
+nom: this.personnel.nom,
+    prenom: this.personnel.prenom,
+    adresse: this.personnel.adresse || null,
+    telephone: this.personnel.telephone || null,
+    email: this.personnel.email || null,
+    dateEmbauche: this.personnel.date_embauche,
+    qualification: this.personnel.qualification,
+    username: this.personnel.username,
+    motDePasse: this.personnel.mot_de_passe,
+    idService: this.personnel.id_service
+  };
         
         axios
-          .post("http://localhost:3002/infirmiers", this.personnel)
+          .post("http://localhost:3002/infirmiers",infirmierData)
           .then(() => {
             this.afficherMessage("Infirmier ajouté avec succès", "success");
             this.reinitialiserFormulaire();

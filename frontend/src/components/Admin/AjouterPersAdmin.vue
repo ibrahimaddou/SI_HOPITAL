@@ -28,15 +28,7 @@
               />
             </div>
             
-            <div class="mb-3">
-              <label class="block mb-1">Date de naissance *</label>
-              <input 
-                v-model="personnel.date_naissance" 
-                type="date" 
-                required
-                class="w-full p-2 border rounded"
-              />
-            </div>
+            
             
             <div class="mb-3">
               <label class="block mb-1">Adresse</label>
@@ -105,15 +97,7 @@
               </select>
             </div>
             
-            <div class="mb-3">
-              <label class="block mb-1">Nom d'utilisateur *</label>
-              <input 
-                v-model="personnel.username" 
-                type="text" 
-                required
-                class="w-full p-2 border rounded"
-              />
-            </div>
+           
             
             <div class="mb-3">
               <label class="block mb-1">Mot de passe *</label>
@@ -164,15 +148,14 @@
         personnel: {
           nom: "",
           prenom: "",
-          date_naissance: "",
+         
           adresse: "",
           telephone: "",
           email: "",
-          date_embauche: "",
+          dateEmbauche: "",
           poste: "",
           id_service: "",
-          username: "",
-          mot_de_passe: "",
+          motDePasse: "",
           est_responsable: false
         },
         envoiEnCours: false,
@@ -182,10 +165,18 @@
     },
     methods: {
       soumettreFormulaire() {
+        console.log("Données à envoyer:", this.personnel);
+// Vérification détaillée
+if (!this.personnel.nom) console.log("Nom manquant");
+if (!this.personnel.prenom) console.log("Prénom manquant");
+if (!this.personnel.date_embauche) console.log("Date d'embauche manquante");
+if (!this.personnel.poste) console.log("Poste manquant");
+if (!this.personnel.id_service) console.log("Service manquant");
+//if (!this.personnel.username) console.log("Nom d'utilisateur manquant");
+if (!this.personnel.mot_de_passe) console.log("Mot de passe manquant");
         // Vérification des champs obligatoires
-        if (!this.personnel.nom || !this.personnel.prenom || !this.personnel.date_naissance || 
-            !this.personnel.date_embauche || !this.personnel.poste || !this.personnel.id_service || 
-            !this.personnel.username || !this.personnel.mot_de_passe) {
+        if (!this.personnel.nom || !this.personnel.prenom || 
+            !this.personnel.date_embauche || !this.personnel.poste || !this.personnel.mot_de_passe) {
           this.afficherMessage("Veuillez remplir tous les champs obligatoires", "error");
           return;
         }
@@ -225,14 +216,12 @@
         this.personnel = {
           nom: "",
           prenom: "",
-          date_naissance: "",
           adresse: "",
           telephone: "",
           email: "",
           date_embauche: "",
           poste: "",
           id_service: "",
-          username: "",
           mot_de_passe: "",
           est_responsable: false
         };

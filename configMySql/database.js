@@ -83,12 +83,12 @@ export async function addMedecin(nom, prenom, adresse, telephone, email, dateEmb
         INSERT INTO Personnel (id_personnel, date_embauche, type_personnel, id_service)
         VALUES (?, ?, 'Médecin', ?);
     `, [idPersonne, dateEmbauche, idService]);
-
+    const username = (prenom.charAt(0) + nom).toLowerCase(); 
   // Insérer dans la table Medecin
   const [resultMedecin] = await pool.query(`
-        INSERT INTO Medecin (id_medecin, specialite, mot_de_passe)
-        VALUES (?, ?, ?);
-    `, [idPersonne, specialite, motDePasse]);
+    INSERT INTO Medecin (id_medecin, specialite, mot_de_passe, username)
+    VALUES (?, ?, ?, ?);
+`, [idPersonne, specialite, motDePasse, username]);
 
  // console.log("Médecin ajouté avec succès !");
   //console.log("ID Personne:", idPersonne);
