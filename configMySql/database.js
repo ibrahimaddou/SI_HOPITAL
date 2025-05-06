@@ -1717,6 +1717,84 @@ export async function modifierSoin(req, res) {
     connection.release();
   }
 }
+export async function getSoins() {
+  const [rows] = await pool.query(`
+    SELECT
+      s.id_soin,
+      s.description,
+      s.id_patient,
+      p.nom as nom_patient,
+      p.prenom as prenom_patient,
+      s.id_reunion_decision,
+      r.date_reunion,
+      r.sujet as sujet_reunion
+    FROM Soin s
+    JOIN Patient pt ON s.id_patient = pt.id_patient
+    JOIN Personne p ON pt.id_patient = p.id_personne
+    JOIN Reunion r ON s.id_reunion_decision = r.id_reunion
+    ORDER BY r.date_reunion DESC
+  `);
+  
+  return rows;
+}
+
+export async function getSoinById(id) {
+  const [soins] = await pool.query(`
+    SELECT
+      s.id_soin,
+      s.description,
+      s.id_patient,
+      p.nom as nom_patient,
+      p.prenom as prenom_patient,
+      s.id_reunion_decision,
+      r.date_reunion,
+      r.sujet as sujet_reunion
+    FROM Soin s
+    JOIN Patient pt ON s.id_patient = pt.id_patient
+    JOIN Personne p ON pt.id_patient = p.id_personne
+    JOIN Reunion r ON s.id_reunion_decision = r.id_reunion
+    WHERE s.id_soin = ?
+  `, [id]);
+  
+  if (soins.length === 0) {
+    return null;
+  }
+  
+  const soin = soins[0];
+  
+  const [medicaments] = await pool.query(`
+    SELECT
+      ms.id_medicament,
+      m.nom as nom_medicament,
+      m.description as desc_medicament,
+      m.dosage,
+      ms.quantite
+    FROM Medicament_Soin ms
+    JOIN Medicament m ON ms.id_medicament = m.id_medicament
+    WHERE ms.id_soin = ?
+  `, [id]);
+  
+  const [administrations] = await pool.query(`
+    SELECT
+      a.id_administration,
+      a.date_heure,
+      a.commentaires,
+      a.id_infirmier,
+      p.nom as nom_infirmier,
+      p.prenom as prenom_infirmier
+    FROM Administration_Soin a
+    JOIN Infirmier i ON a.id_infirmier = i.id_infirmier
+    JOIN Personnel pe ON i.id_infirmier = pe.id_personnel
+    JOIN Personne p ON pe.id_personnel = p.id_personne
+    WHERE a.id_soin = ?
+    ORDER BY a.date_heure DESC
+  `, [id]);
+  
+  soin.medicaments = medicaments;
+  soin.administrations = administrations;
+  
+  return soin;
+}
 /*export async function () {
   const [rows] = await pool.query(`
     `);

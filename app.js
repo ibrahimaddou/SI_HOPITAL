@@ -10,7 +10,7 @@ import {
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,modifierSoin
+    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -484,7 +484,42 @@ app.post("/soins", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout du soin" });
   }
 });
+app.get("/soins", async (req, res) => {
+  try {
+    const soins = await getSoins();
+    res.status(200).send(soins);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des soins:", error);
+    res.status(500).send({
+      success: false,
+      message: "Erreur serveur lors de la récupération des soins",
+      error: error.message
+    });
+  }
+});
 
+app.get("/soins/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const soin = await getSoinById(id);
+    
+    if (!soin) {
+      return res.status(404).send({
+        success: false,
+        message: "Soin non trouvé"
+      });
+    }
+    
+    res.status(200).send(soin);
+  } catch (error) {
+    console.error("Erreur lors de la récupération du soin:", error);
+    res.status(500).send({
+      success: false,
+      message: "Erreur serveur lors de la récupération du soin",
+      error: error.message
+    });
+  }
+});
 app.put("/modifierSoin/:idSoin", modifierSoin);
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {

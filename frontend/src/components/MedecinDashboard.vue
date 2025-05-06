@@ -67,7 +67,13 @@
         >
         Ajouter Soin
         </button>
-        
+        <button 
+          @click="activeComponent = 'ModifierSoin'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'ModifierSoin'}"
+        >
+        Modifier Soin
+        </button>
       </nav>
     </div>
 
@@ -93,6 +99,7 @@ import AjouterVisiteMedicale from "./Medecin/AjouterVisiteMedicale.vue";
 import AjouterPatient from "./Medecin/AjouterPatient.vue";
 import AjouterReunion from "./Medecin/AjouterReunion.vue";
 import AjouterSoin from "./Medecin/AjouterSoin.vue";
+import ModifierSoin from "./Medecin/ModifierSoin.vue";
 
 export default {
   name: "MedecinDashboard",
@@ -106,6 +113,7 @@ export default {
     AjouterPatient,
     AjouterReunion,
     AjouterSoin,
+    ModifierSoin,
   },
   data() {
     return {
@@ -123,7 +131,7 @@ export default {
 
 .sidebar {
   width: 250px;
-  background-color: #2c3e50; /* Couleur standard de Vue.js */
+  background-color: #2c3e50; 
   color: white;
   padding: 20px;
 }
@@ -153,11 +161,11 @@ export default {
 }
 
 .nav-button:hover {
-  background-color: #34495e; /* Une teinte plus claire pour le hover */
+  background-color: #34495e; 
 }
 
 .nav-button.active {
-  background-color: #42b983; /* Couleur d'accent standard de Vue.js */
+  background-color: #42b983; 
 }
 
 .main-content {
