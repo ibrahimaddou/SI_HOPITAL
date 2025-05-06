@@ -74,6 +74,14 @@
         >
         Modifier Soin
         </button>
+        <button 
+          @click="activeComponent = 'AfficherChambresService'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AfficherChambresService'}"
+        >
+        Afficher Chambres Service
+        </button>
+        
       </nav>
     </div>
 
@@ -100,6 +108,7 @@ import AjouterPatient from "./Medecin/AjouterPatient.vue";
 import AjouterReunion from "./Medecin/AjouterReunion.vue";
 import AjouterSoin from "./Medecin/AjouterSoin.vue";
 import ModifierSoin from "./Medecin/ModifierSoin.vue";
+import AfficherChambresService from "./Medecin/AfficherChambresService.vue";
 
 export default {
   name: "MedecinDashboard",
@@ -114,6 +123,7 @@ export default {
     AjouterReunion,
     AjouterSoin,
     ModifierSoin,
+    AfficherChambresService
   },
   data() {
     return {
