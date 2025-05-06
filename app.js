@@ -362,7 +362,49 @@ app.get("/visitesMedecin/:id", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - récupération des visites du médecin" });
   }
 });
-
+app.post("/ajouterVisiteMedicale", async (req, res) => {
+  try {
+    const {
+      idPatient,
+      idMedecin,
+      dateVisite,
+      compteRendu,
+      diagnostics,
+      prescriptions,
+      idSejour
+    } = req.body;
+    
+    if (!idPatient || !idMedecin || !dateVisite || !compteRendu) {
+      return res.status(400).send({
+        error: "L'ID du patient, l'ID du médecin, la date de visite et le compte-rendu sont obligatoires"
+      });
+    }
+    
+    const visiteResult = await ajouterVisiteMedicale(
+      idPatient,
+      idMedecin,
+      dateVisite,
+      compteRendu,
+      diagnostics,
+      prescriptions,
+      idSejour
+    );
+    
+    res.status(201).send(visiteResult);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout de la visite médicale! ", error);
+    
+    if (error.message) {
+      if (error.message.includes("Patient non trouvé") || 
+          error.message.includes("Médecin non trouvé") || 
+          error.message.includes("Séjour non trouvé")) {
+        return res.status(404).send({ error: error.message });
+      }
+    }
+    
+    res.status(500).send({ error: "Erreur serveur - ajout de la visite médicale" });
+  }
+});
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
   try {
