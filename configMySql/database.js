@@ -245,6 +245,30 @@ export async function getPatients() {
   `);
   return rows;
 }
+export async function getPatientById(patientId) {
+  const [rows] = await pool.query(`
+    SELECT
+      p.id_personne,
+      pa.id_patient,
+      p.nom,
+      p.prenom,
+      p.date_naissance,
+      p.adresse,
+      p.telephone,
+      p.email,
+      pa.antecedents_medicaux
+    FROM
+      Personne p
+    JOIN
+      Patient pa ON p.id_personne = pa.id_patient
+    WHERE
+      p.type_personne = 'Patient'
+      AND pa.id_patient = ?
+    ORDER BY
+      p.nom, p.prenom;
+  `, [patientId]);
+  return rows;
+}
 //personnel nettoyage
 
 export async function getNettoyage() {

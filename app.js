@@ -10,7 +10,7 @@ import {
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,
+    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -275,6 +275,34 @@ app.get("/patients", async (req, res) => {
   const patients = await getPatients()
   res.send(patients)
 })
+app.get("/patients/:id", async (req, res) => {
+  try {
+    const patientId = req.params.id;
+    
+    // Vérification que l'ID est un nombre
+    if (isNaN(patientId)) {
+      return res.status(400).send({
+        message: "L'ID du patient doit être un nombre"
+      });
+    }
+    
+    const patient = await getPatientById(patientId);
+    
+    if (patient.length === 0) {
+      return res.status(404).send({
+        message: `Aucun patient trouvé avec l'ID ${patientId}`
+      });
+    }
+    
+    res.send(patient);
+  } catch (error) {
+    console.error("Erreur serveur :", error);
+    res.status(500).send({
+      message: "Erreur lors de la récupération du patient",
+      error: error.message
+    });
+  }
+});
 app.post("/patients", async (req, res) => {
   try {
     const { nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux } = req.body;
