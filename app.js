@@ -426,6 +426,64 @@ app.post("/reunions", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout de la réunion" });
   }
 });
+app.post("/soins", async (req, res) => {
+  try {
+    const { description, id_patient, id_reunion_decision, medicaments } = req.body;
+    
+   
+    if (!description || !id_patient || !id_reunion_decision) {
+      return res.status(400).send({ 
+        error: "La description, l'ID du patient et l'ID de la réunion de décision sont obligatoires" 
+      });
+    }
+    
+    // patient
+    const [patients] = await pool.query(`
+      SELECT id_patient FROM Patient WHERE id_patient = ?
+    `, [id_patient]);
+    
+    if (patients.length === 0) {
+      return res.status(404).send({ error: "Patient non trouvé" });
+    }
+    
+    // si la réunion existe
+    const [reunions] = await pool.query(`
+      SELECT id_reunion FROM Reunion WHERE id_reunion = ?
+    `, [id_reunion_decision]);
+    
+    if (reunions.length === 0) {
+      return res.status(404).send({ error: "Réunion non trouvée" });
+    }
+    
+    if (medicaments && medicaments.length > 0) {
+      for (const med of medicaments) {
+        if (!med.id_medicament || !med.quantite) {
+          return res.status(400).send({ 
+            error: "Chaque médicament doit avoir un ID et une quantité" 
+          });
+        }
+        
+        // si le médicament existe
+        const [meds] = await pool.query(`
+          SELECT id_medicament FROM Medicament WHERE id_medicament = ?
+        `, [med.id_medicament]);
+        
+        if (meds.length === 0) {
+          return res.status(404).send({ 
+            error: `Médicament avec ID ${med.id_medicament} non trouvé` 
+          });
+        }
+      }
+    }
+    
+    const soin = await ajouterSoin(description, id_patient, id_reunion_decision, medicaments);
+    
+    res.status(201).send(soin);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du soin! ", error);
+    res.status(500).send({ error: "Erreur serveur - ajout du soin" });
+  }
+});
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {
   try {

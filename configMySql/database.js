@@ -1488,6 +1488,75 @@ export async function ajouterReunion(dateReunion, sujet, compteRendu, medecinIds
     connection.release();
   }
 }
+export async function ajouterSoin(description, idPatient, idReunionDecision, medicamentsAssocies) {
+  const connection = await pool.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    // Insertion du soin
+    const [resultSoin] = await connection.query(`
+      INSERT INTO Soin (description, id_patient, id_reunion_decision)
+      VALUES (?, ?, ?);
+    `, [description, idPatient, idReunionDecision]);
+    
+    const idSoin = resultSoin.insertId;
+    
+    // Ajout des médicaments associés au soin
+    if (medicamentsAssocies && medicamentsAssocies.length > 0) {
+      for (const med of medicamentsAssocies) {
+        await connection.query(`
+          INSERT INTO Medicament_Soin (id_soin, id_medicament, quantite)
+          VALUES (?, ?, ?);
+        `, [idSoin, med.id_medicament, med.quantite]);
+      }
+    }
+    
+    await connection.commit();
+    
+    
+    const [soins] = await connection.query(`
+      SELECT 
+        s.id_soin, 
+        s.description, 
+        s.id_patient, 
+        s.id_reunion_decision,
+        p.nom as nom_patient, 
+        p.prenom as prenom_patient
+      FROM Soin s
+      JOIN Patient pt ON s.id_patient = pt.id_patient
+      JOIN Personne p ON pt.id_patient = p.id_personne
+      WHERE s.id_soin = ?
+    `, [idSoin]);
+    
+    const [medicaments] = await connection.query(`
+      SELECT 
+        ms.id_medicament,
+        m.nom as nom_medicament, 
+        m.description as desc_medicament, 
+        m.dosage, 
+        ms.quantite
+      FROM Medicament_Soin ms
+      JOIN Medicament m ON ms.id_medicament = m.id_medicament
+      WHERE ms.id_soin = ?
+    `, [idSoin]);
+    
+    // Combiner les informations
+    const soinComplet = {
+      ...soins[0],
+      medicaments: medicaments
+    };
+    
+    return soinComplet;
+    
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);
