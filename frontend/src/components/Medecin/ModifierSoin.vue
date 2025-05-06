@@ -22,9 +22,9 @@
                   class="w-full p-2 border rounded"
                 >
                   <option value="">Sélectionnez un patient</option>
-                  <option v-for="patient in patients" :key="patient.id_patient" :value="patient.id_patient">
-                    {{ patient.nom }} {{ patient.prenom }}
-                  </option>
+                  <option v-for="patient in patients" :key="patient.id_patient || patient.id_personne" :value="patient.id_patient || patient.id_personne">
+  {{ patient.nom }} {{ patient.prenom }}
+</option>
                 </select>
               </div>
               
@@ -204,7 +204,7 @@
           const [patientsResponse, reunionsResponse, medicamentsResponse] = await Promise.all([
             axios.get("http://localhost:3002/patients"),
             axios.get("http://localhost:3002/reunions"),
-            axios.get("http://localhost:3002/afficherMedicamentsPatient")
+            axios.get("http://localhost:3002/afficherMedicaments")
           ]);
           
           this.patients = patientsResponse.data;
