@@ -9,7 +9,8 @@ import {
     getMedicaments,getChambresANettoyer,enregistrerNettoyage,
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
-    getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales
+    getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
+    getVisitesByMedecin,
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -351,7 +352,16 @@ app.get("/afficherVisitesMedicales", async (req, res) => {
   const visites = await getVisitesMedicales();
   res.send(visites)
 });
-
+app.get("/visitesMedecin/:id", async (req, res) => {
+  try {
+    const idMedecin = req.params.id;
+    const visites = await getVisitesByMedecin(idMedecin);
+    res.status(200).send(visites);
+  } catch (error) {
+    console.error("Erreur lors de la récupération des visites du médecin: ", error);
+    res.status(500).send({ error: "Erreur serveur - récupération des visites du médecin" });
+  }
+});
 
 //Infirmiers_______________________________________________________________________________________
 app.get("/afficherChambres/:idService", async (req, res) => {

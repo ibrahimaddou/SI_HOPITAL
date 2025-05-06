@@ -1337,6 +1337,20 @@ export async function getSoinsPatient(idPatient) {
   
   return soins;
 }
+export async function getVisitesByMedecin(idMedecin) {
+  const [visites] = await pool.query(`
+    SELECT vm.*, 
+           p_patient.nom as nom_patient, p_patient.prenom as prenom_patient
+    FROM Visite_Medicale vm
+    JOIN Patient pt ON vm.id_patient = pt.id_patient
+    JOIN Personne p_patient ON pt.id_patient = p_patient.id_personne
+    WHERE vm.id_medecin = ?
+    ORDER BY vm.date_visite DESC
+  `, [idMedecin]);
+ 
+  return visites;
+}
+
 /*export async function () {
   const [rows] = await pool.query(`
     `);
