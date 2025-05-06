@@ -53,6 +53,13 @@
         >
         Ajouter Patient
         </button>
+        <button 
+          @click="activeComponent = 'AjouterReunion'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AjouterReunion'}"
+        >
+        Ajouter Reunion
+        </button>
         
       </nav>
     </div>
@@ -77,6 +84,7 @@ import ReunionSoin from "./Medecin/reunionSoin.vue";
 import VisitesMedicales from "./Medecin/VisitesMedicales.vue";
 import AjouterVisiteMedicale from "./Medecin/AjouterVisiteMedicale.vue";
 import AjouterPatient from "./Medecin/AjouterPatient.vue";
+import AjouterReunion from "./Medecin/AjouterReunion.vue";
 
 export default {
   name: "MedecinDashboard",
@@ -88,6 +96,7 @@ export default {
     VisitesMedicales,
     AjouterVisiteMedicale,
     AjouterPatient,
+    AjouterReunion,
   },
   data() {
     return {
