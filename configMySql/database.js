@@ -324,6 +324,31 @@ export async function getLitsDisponibles() {
     `);
   return rows;
 }
+export async function getLitsDisponiblesById(id_chambre) {
+  const [rows] = await pool.query(`
+    SELECT
+        l.id_lit,
+        l.numero AS numero_lit,
+        c.numero AS numero_chambre,
+        c.etage,
+        s.nom AS service
+    FROM
+        Lit l
+        INNER JOIN Chambre c ON l.id_chambre = c.id_chambre
+        INNER JOIN Service s ON c.id_service = s.id_service
+    WHERE
+        l.id_lit NOT IN (
+            SELECT sej.id_lit
+            FROM Sejour sej
+            WHERE sej.date_sortie_reelle IS NULL
+        )
+        AND c.id_chambre = ?
+    ORDER BY
+        l.numero;
+    `, [id_chambre]);
+  
+  return rows;
+}
 export async function getChambresVides() {
   const [rows] = await pool.query(`
     SELECT 

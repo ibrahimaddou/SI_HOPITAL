@@ -10,7 +10,7 @@ import {
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById
+    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDisponiblesById
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -94,6 +94,11 @@ app.get("/litsDisponibles", async (req,res)=>{
   const lits = await getLitsDisponibles()
 
   res.send(lits)
+})
+app.get("/litsDisponibles/:id_chambre", async (req, res) => { 
+  const id_chambre = req.params.id_chambre; 
+  const lits = await getLitsDisponiblesById(id_chambre); 
+  res.send(lits); 
 })
 app.get("/chambresVides", async (req,res)=>{
   const chambres = await getChambresVides()
@@ -234,7 +239,7 @@ app.post("/sejours", async (req, res) => {
       idAdminAffectation 
     } = req.body;
     
-    if (!idPatient || !idLit || !dateArrivee || !raisonSejour || !idAdminAffectation) {
+    if (!idPatient || !idLit || !dateArrivee || !raisonSejour ) {
       return res.status(400).send({ 
         error: "L'ID du patient, l'ID du lit, la date d'arrivée, la raison du séjour et l'ID de l'administrateur sont obligatoires" 
       });
