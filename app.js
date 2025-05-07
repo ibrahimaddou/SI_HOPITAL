@@ -11,7 +11,7 @@ import {
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
     getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDisponiblesById,
-    supprimerVisiteMedicale,ajouterVisiteMedicale
+    supprimerVisiteMedicale,ajouterVisiteMedicale,ajouterReunion
 
   } from './configMySql/database.js'
 import cors from 'cors'
