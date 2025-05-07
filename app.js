@@ -1,5 +1,5 @@
 import express from 'express'
-import { 
+import {   pool,ajouterSoin,ajouterReunion,ajouterVisiteMedicale,getSoinsPatient,
   getMedecinById,getMedecins,addMedecin,getInfirmiers, getAdministratifs,
     getPatients, getNettoyage,getLitsDisponibles,getChambresVides,
     getChambresNonNettoyees,getPatientsRetardSortie,
@@ -10,14 +10,14 @@ import {
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById
+    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDispPchambre
 
   } from './configMySql/database.js'
 import cors from 'cors'
 import bodyParser from 'body-parser';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import mysql from 'mysql2'
+import mysql from 'mysql2';
 
 
 dotenv.config();
@@ -51,7 +51,79 @@ const authenticateToken = (req, res, next) => {
       next();
     });
   };
+ app.post('/login', async (req, res) => {
+    try {
+        const { username, password, userType } = req.body;
+        
+        if (!username || !password || !userType) {
+          return res.status(400).json({ message: 'Nom d\'utilisateur, mot de passe et type d\'utilisateur requis' });
+        }
+        
+    
+        if (!['admin', 'medecin', 'infirmier','personnelNett'].includes(userType)) {
+          return res.status(400).json({ message: 'Type d\'utilisateur invalide' });
+        }
+        
+        const connection = await connectDB();
+        
+        let table;
+        switch (userType) {
+          case 'admin':
+            table = 'personnel_administratif';
+            break;
+          case 'medecin':
+            table = 'medecin';
+            break;
+          case 'infirmier':
+            table = 'infirmier';
+            break;
+          case 'personnelNett':
+              table = 'Personnel_Nettoyage';
+              break;
+        }
+        
+        const result = await connection.execute(`SELECT * FROM ${table} WHERE username = ?`, [username]);
+        console.log("Résultat de la requête:", result); 
+const rows = result[0]
+        await connection.end();
+        
+        if (rows.length === 0) {
+          return res.status(401).json({ message: 'Identifiants incorrects' });
+        }
+        
+        const user = rows[0];
+    
+    if (password !== user.mot_de_passe) {
+      return res.status(401).json({ message: 'Identifiants incorrects' });
+  }
 
+
+        
+    // Création du token JWT
+    const token = jwt.sign(
+        { id: user.id, username: user.username, role: userType },
+        JWT_SECRET,
+        { expiresIn: '8h' }
+      );
+
+      res.json({
+        message: 'Connexion réussie',
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          role: userType,
+          nom: user.nom,
+          prenom: user.prenom,
+          email: user.email
+        }
+      });
+        
+      } catch (error) {
+        console.error('Erreur lors de la connexion:', error);
+        res.status(500).json({ message: 'Erreur serveur' });
+      }
+})
 // route vers vuejs envoie des données des medecins au front
 app.get('/api/data',(req, res) => {
     res.json({message:'Données du backend'});
@@ -90,6 +162,13 @@ app.post("/medecins" , async (req, res) => {
     res.status(201).send(medecin)
     
 })
+app.get("/lits/:idchambres", async (req, res) => {
+    const idChambres = req.params.idchambres
+    const lits = await getLitsDispPchambre(idChambres)
+    res.send(lits)
+ })
+  
+  
 app.get("/litsDisponibles", async (req,res)=>{
   const lits = await getLitsDisponibles()
 
@@ -221,22 +300,45 @@ app.get("/sejours", async (req,res)=>{
 
   res.send(sejours)
 })
-app.put("/modifierDateSortiePatient/:idSejour", modifierDateSortiePatient);
 
-app.post("/sejours", async (req, res) => {
+  
+ app.get("/sejours/:idSejour", async (req, res) => {
+  const sejourId = req.params.idSejour;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM Sejour WHERE id_sejour = ?",
+      [sejourId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).send({ error: "Séjour non trouvé" });
+    }
+
+    res.send(rows[0]);
+  } catch (err) {
+    console.error("Erreur lors de la récupération du séjour :", err);
+    res.status(500).send({ error: "Erreur serveur" });
+  }
+});
+
+app.put("/modifierDateSortiePatient/:idSejour", modifierDateSortiePatient);
+app.post("/sejours", authenticateToken, async (req, res) => {
   try {
     const { 
       idPatient, 
       idLit, 
       dateArrivee, 
       dateSortiePrevisionnelle, 
-      raisonSejour,
-      idAdminAffectation 
+      raisonSejour
     } = req.body;
     
-    if (!idPatient || !idLit || !dateArrivee || !raisonSejour || !idAdminAffectation) {
+    // Récupération de l'ID depuis le token JWT
+    const idAdministrateur = req.user.id;
+    
+    if (!idPatient || !idLit || !dateArrivee || !raisonSejour) {
       return res.status(400).send({ 
-        error: "L'ID du patient, l'ID du lit, la date d'arrivée, la raison du séjour et l'ID de l'administrateur sont obligatoires" 
+        error: "L'ID du patient, l'ID du lit, la date d'arrivée et la raison du séjour sont obligatoires" 
       });
     }
     
@@ -246,7 +348,7 @@ app.post("/sejours", async (req, res) => {
       dateArrivee,
       dateSortiePrevisionnelle,
       raisonSejour,
-      idAdminAffectation
+      idAdministrateur // Passage de l'ID de l'administrateur
     );
     
     res.status(201).send(sejour);
@@ -260,7 +362,6 @@ app.post("/sejours", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - ajout du séjour" });
   }
 });
-
 app.get("/services", async (req, res) => {
   try {
     const services = await getServices();
@@ -609,21 +710,28 @@ app.get("/administrationSoin", async (req, res) => {
   res.send(adminS)
 }) 
 
-app.post("/administrationSoin", async (req, res) => {
-  try {
-    const { id_soin, id_infirmier, commentaires } = req.body;
-    
-    if (!id_soin || !id_infirmier) {
-      return res.status(400).send({ error: "soin et infirmier sont obligatoires" });
-    }
-    
-    const administrationS = await ajouterAdministrationSoin(id_soin, id_infirmier, commentaires);
-    
-    res.status(201).send(administrationS);
-  } catch (error) {
-    console.error("Erreur lors de l'ajout d'une administration de soin! ", error);
-    res.status(500).send({ error: "Erreur serveur - ajout d'administration de soin" });
+app.post("/administrationSoin", (req, res) => {
+  const { id_soin, id_infirmier, date_heure, commentaires } = req.body;
+
+  // Vérifie que toutes les données sont présentes
+  if (!id_soin || !id_infirmier || !date_heure) {
+    return res.status(400).json({ message: "Champs manquants" });
   }
+
+  // Ajoute dans la BDD ici (exemple avec pg)
+  const query = `
+    INSERT INTO administration_soins (id_soin, id_infirmier, date_heure, commentaires)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  pool.query(query, [id_soin, id_infirmier, date_heure, commentaires || null])
+    .then(() => {
+      res.status(201).json({ message: "Administration enregistrée" });
+    })
+    .catch(error => {
+      console.error("Erreur d'insertion:", error);
+      res.status(500).json({ message: "Erreur serveur" });
+    });
 });
 app.get("/afficherSoinsPatient/:idPatient", async (req, res) => {
   try {
@@ -749,79 +857,7 @@ async function connectDB() {
       throw error;
     }
   }
-app.post('/login', async (req, res) => {
-    try {
-        const { username, password, userType } = req.body;
-        
-        if (!username || !password || !userType) {
-          return res.status(400).json({ message: 'Nom d\'utilisateur, mot de passe et type d\'utilisateur requis' });
-        }
-        
-    
-        if (!['admin', 'medecin', 'infirmier','personnelNett'].includes(userType)) {
-          return res.status(400).json({ message: 'Type d\'utilisateur invalide' });
-        }
-        
-        const connection = await connectDB();
-        
-        let table;
-        switch (userType) {
-          case 'admin':
-            table = 'personnel_administratif';
-            break;
-          case 'medecin':
-            table = 'medecin';
-            break;
-          case 'infirmier':
-            table = 'infirmier';
-            break;
-          case 'personnelNett':
-              table = 'Personnel_Nettoyage';
-              break;
-        }
-        
-        const result = await connection.execute(`SELECT * FROM ${table} WHERE username = ?`, [username]);
-        console.log("Résultat de la requête:", result); 
-const rows = result[0]
-        await connection.end();
-        
-        if (rows.length === 0) {
-          return res.status(401).json({ message: 'Identifiants incorrects' });
-        }
-        
-        const user = rows[0];
-    
-    if (password !== user.mot_de_passe) {
-      return res.status(401).json({ message: 'Identifiants incorrects' });
-  }
 
-
-        
-    // Création du token JWT
-    const token = jwt.sign(
-        { id: user.id, username: user.username, role: userType },
-        JWT_SECRET,
-        { expiresIn: '8h' }
-      );
-
-      res.json({
-        message: 'Connexion réussie',
-        token,
-        user: {
-          id: user.id,
-          username: user.username,
-          role: userType,
-          nom: user.nom,
-          prenom: user.prenom,
-          email: user.email
-        }
-      });
-        
-      } catch (error) {
-        console.error('Erreur lors de la connexion:', error);
-        res.status(500).json({ message: 'Erreur serveur' });
-      }
-})
 
 app.use((err, req, res, next) => {
     console.error(err.stack)

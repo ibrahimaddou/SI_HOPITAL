@@ -6,26 +6,26 @@
       <nav class="sidebar-nav">
         <!-- Catégorie Gestion des Médecins -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('medecins')"
-            :class="{'active': openCategories.medecins}"
+            :class="{ active: openCategories.medecins }"
           >
             <span>Gestion des Médecins</span>
-            <span class="icon">{{ openCategories.medecins ? '▼' : '►' }}</span>
+            <span class="icon">{{ openCategories.medecins ? "▼" : "►" }}</span>
           </div>
           <div class="category-content" v-show="openCategories.medecins">
-            <button 
+            <button
               @click="activeComponent = 'ListeMedecins'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ListeMedecins'}"
+              :class="{ active: activeComponent === 'ListeMedecins' }"
             >
               Liste des Médecins
             </button>
-            <button 
+            <button
               @click="activeComponent = 'AjouterMedecin'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AjouterMedecin'}"
+              :class="{ active: activeComponent === 'AjouterMedecin' }"
             >
               Ajouter un Médecin
             </button>
@@ -34,26 +34,28 @@
 
         <!-- Catégorie Gestion des Infirmiers -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('infirmiers')"
-            :class="{'active': openCategories.infirmiers}"
+            :class="{ active: openCategories.infirmiers }"
           >
             <span>Gestion des Infirmiers</span>
-            <span class="icon">{{ openCategories.infirmiers ? '▼' : '►' }}</span>
+            <span class="icon">{{
+              openCategories.infirmiers ? "▼" : "►"
+            }}</span>
           </div>
           <div class="category-content" v-show="openCategories.infirmiers">
-            <button 
+            <button
               @click="activeComponent = 'ListeInfirm'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ListeInfirm'}"
+              :class="{ active: activeComponent === 'ListeInfirm' }"
             >
               Liste des Infirmiers
             </button>
-            <button 
+            <button
               @click="activeComponent = 'AjouterInfirmier'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AjouterInfirmier'}"
+              :class="{ active: activeComponent === 'AjouterInfirmier' }"
             >
               Ajouter un Infirmier
             </button>
@@ -62,26 +64,26 @@
 
         <!-- Catégorie Personnel Administratif -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('admin')"
-            :class="{'active': openCategories.admin}"
+            :class="{ active: openCategories.admin }"
           >
             <span>Personnel Administratif</span>
-            <span class="icon">{{ openCategories.admin ? '▼' : '►' }}</span>
+            <span class="icon">{{ openCategories.admin ? "▼" : "►" }}</span>
           </div>
           <div class="category-content" v-show="openCategories.admin">
-            <button 
+            <button
               @click="activeComponent = 'ListPersAdmin'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ListPersAdmin'}"
+              :class="{ active: activeComponent === 'ListPersAdmin' }"
             >
               Liste du Personnel
             </button>
-            <button 
+            <button
               @click="activeComponent = 'AjouterPersAdmin'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AjouterPersAdmin'}"
+              :class="{ active: activeComponent === 'AjouterPersAdmin' }"
             >
               Ajouter du Personnel
             </button>
@@ -90,26 +92,26 @@
 
         <!-- Catégorie Personnel d'Entretien -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('nettoyage')"
-            :class="{'active': openCategories.nettoyage}"
+            :class="{ active: openCategories.nettoyage }"
           >
             <span>Personnel d'Entretien</span>
-            <span class="icon">{{ openCategories.nettoyage ? '▼' : '►' }}</span>
+            <span class="icon">{{ openCategories.nettoyage ? "▼" : "►" }}</span>
           </div>
           <div class="category-content" v-show="openCategories.nettoyage">
-            <button 
+            <button
               @click="activeComponent = 'ListPersNet'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ListPersNet'}"
+              :class="{ active: activeComponent === 'ListPersNet' }"
             >
               Liste du Personnel
             </button>
-            <button 
+            <button
               @click="activeComponent = 'AjouterPersNett'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AjouterPersNett'}"
+              :class="{ active: activeComponent === 'AjouterPersNett' }"
             >
               Ajouter du Personnel
             </button>
@@ -118,40 +120,42 @@
 
         <!-- Catégorie Gestion des Patients -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('patients')"
-            :class="{'active': openCategories.patients}"
+            :class="{ active: openCategories.patients }"
           >
             <span>Gestion des Patients</span>
-            <span class="icon">{{ openCategories.patients ? '▼' : '►' }}</span>
+            <span class="icon">{{ openCategories.patients ? "▼" : "►" }}</span>
           </div>
           <div class="category-content" v-show="openCategories.patients">
-            <button 
+            <button
               @click="activeComponent = 'ListePatients'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ListePatients'}"
+              :class="{ active: activeComponent === 'ListePatients' }"
             >
               Liste des Patients
             </button>
-            <button 
+            <button
               @click="activeComponent = 'PatientsRetardSortie'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'PatientsRetardSortie'}"
+              :class="{ active: activeComponent === 'PatientsRetardSortie' }"
             >
               Patients en Retard de Sortie
             </button>
-            <button 
+            <button
               @click="activeComponent = 'ModifierDateSortiePatient'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ModifierDateSortiePatient'}"
+              :class="{
+                active: activeComponent === 'ModifierDateSortiePatient',
+              }"
             >
               Modifier Date de Sortie
             </button>
-            <button 
+            <button
               @click="activeComponent = 'SupprimerPatient'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'SupprimerPatient'}"
+              :class="{ active: activeComponent === 'SupprimerPatient' }"
             >
               Supprimer Patient
             </button>
@@ -160,47 +164,49 @@
 
         <!-- Catégorie Organisation -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('organisation')"
-            :class="{'active': openCategories.organisation}"
+            :class="{ active: openCategories.organisation }"
           >
             <span>Organisation</span>
-            <span class="icon">{{ openCategories.organisation ? '▼' : '►' }}</span>
+            <span class="icon">{{
+              openCategories.organisation ? "▼" : "►"
+            }}</span>
           </div>
           <div class="category-content" v-show="openCategories.organisation">
-            <button 
+            <button
               @click="activeComponent = 'litsDispo'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'litsDispo'}"
+              :class="{ active: activeComponent === 'litsDispo' }"
             >
               Lits Disponibles
             </button>
-            <button 
+            <button
               @click="activeComponent = 'ChambresVides'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ChambresVides'}"
+              :class="{ active: activeComponent === 'ChambresVides' }"
             >
               Chambres Vides
             </button>
-            <button 
+            <button
               @click="activeComponent = 'ChambresNonNett'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'ChambresNonNett'}"
+              :class="{ active: activeComponent === 'ChambresNonNett' }"
             >
               Chambres Non Nettoyées
             </button>
-            <button 
+            <button
               @click="activeComponent = 'AfficherServices'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AfficherServices'}"
+              :class="{ active: activeComponent === 'AfficherServices' }"
             >
               Liste des Services
             </button>
-            <button 
+            <button
               @click="activeComponent = 'EtatOccupService'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'EtatOccupService'}"
+              :class="{ active: activeComponent === 'EtatOccupService' }"
             >
               Occupation des Services
             </button>
@@ -209,40 +215,40 @@
 
         <!-- Catégorie Gestion des Séjours -->
         <div class="nav-category">
-          <div 
-            class="category-header" 
+          <div
+            class="category-header"
             @click="toggleCategory('sejours')"
-            :class="{'active': openCategories.sejours}"
+            :class="{ active: openCategories.sejours }"
           >
             <span>Gestion des Séjours</span>
-            <span class="icon">{{ openCategories.sejours ? '▼' : '►' }}</span>
+            <span class="icon">{{ openCategories.sejours ? "▼" : "►" }}</span>
           </div>
           <div class="category-content" v-show="openCategories.sejours">
-            <button 
+            <button
               @click="activeComponent = 'AjouterSejour'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'AjouterSejour'}"
+              :class="{ active: activeComponent === 'AjouterSejour' }"
             >
               Ajouter Séjour
             </button>
-            <button 
+            <button
               @click="activeComponent = 'SupprimerSejour'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'SupprimerSejour'}"
+              :class="{ active: activeComponent === 'SupprimerSejour' }"
             >
               Supprimer Séjour
             </button>
-            <button 
+            <button
               @click="activeComponent = 'SupprimerSoin'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'SupprimerSoin'}"
+              :class="{ active: activeComponent === 'SupprimerSoin' }"
             >
               Supprimer Soin
             </button>
-            <button 
+            <button
               @click="activeComponent = 'SupprimerVisiteMed'"
               class="nav-button sub-item"
-              :class="{'active': activeComponent === 'SupprimerVisiteMed'}"
+              :class="{ active: activeComponent === 'SupprimerVisiteMed' }"
             >
               Supprimer Visite Médicale
             </button>
@@ -254,10 +260,13 @@
     <!-- Contenu à droite -->
     <div class="main-content">
       <h1 class="page-title">Tableau de bord administrateur</h1>
-      
+
       <!--  contenu  -->
       <div class="content-card">
-        <component :is="activeComponent" @medecin-ajoute="handleMedecinAjoute"></component>
+        <component
+          :is="activeComponent"
+          @medecin-ajoute="handleMedecinAjoute"
+        ></component>
       </div>
     </div>
   </div>
@@ -313,29 +322,33 @@ export default {
   },
   data() {
     return {
-      activeComponent: 'ListeMedecins', // Composant affiché par défaut
+      activeComponent: "ListeMedecins", // Composant affiché par défaut
       openCategories: {
-        medecins: true,  // Catégorie ouverte par défaut
+        medecins: true, // Catégorie ouverte par défaut
         infirmiers: false,
         admin: false,
         nettoyage: false,
         patients: false,
         organisation: false,
-        sejours: false
-      }
-    }
+        sejours: false,
+      },
+    };
+  },
+  authToken() {
+    // Récupération du token depuis le localStorage
+    return localStorage.getItem("token");
   },
   methods: {
     handleMedecinAjoute() {
       // Après l'ajout d'un médecin, revenir à la liste des médecins
-      this.activeComponent = 'ListeMedecins';
+      this.activeComponent = "ListeMedecins";
     },
     toggleCategory(category) {
       // Toggle la visibilité de la catégorie
       this.openCategories[category] = !this.openCategories[category];
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -346,7 +359,7 @@ export default {
 
 .sidebar {
   width: 280px;
-  background-color: #2c3e50; 
+  background-color: #2c3e50;
   color: white;
   padding: 20px;
   overflow-y: auto;
@@ -411,11 +424,11 @@ export default {
 }
 
 .nav-button:hover {
-  background-color: #34495e; 
+  background-color: #34495e;
 }
 
 .nav-button.active {
-  background-color: #42b983; 
+  background-color: #42b983;
 }
 
 .main-content {

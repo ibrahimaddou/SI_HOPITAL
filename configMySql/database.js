@@ -11,7 +11,7 @@ import path from 'path';
 
 dotenv.config()
 
-const pool = mysql.createPool({
+export const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -692,6 +692,16 @@ export async function getChambresParService(idService) {
     console.error("Erreur lors de la récupération des chambres du service:", error);
     throw error;
   }
+}
+
+export async function getLitsDispPchambre(idChambre) {
+  const query = `
+    SELECT id_lit, id_chambre, numero
+    FROM Lit
+    WHERE id_chambre = ? and id_lit NOT IN ( select id_lit from Sejour where date_sortie_reelle IS NULL)
+  `;
+  const [rows] = await pool.query(query, [idChambre]);
+  return rows;
 }
 // afficher les med
 export async function getMedicaments() {
@@ -1583,6 +1593,15 @@ export async function modifierSoin(req, res) {
   const idSoin = req.params.idSoin;
   const { description, id_patient, id_reunion_decision, medicaments } = req.body;
   
+  // Ajout de logs détaillés pour déboguer
+  console.log("Données reçues dans modifierSoin:", {
+    idSoin,
+    description,
+    id_patient,
+    id_reunion_decision,
+    medicaments: medicaments ? JSON.stringify(medicaments) : "undefined"
+  });
+  
   if (!description || !id_patient || !id_reunion_decision) {
     return res.status(400).json({
       success: false,
@@ -1648,6 +1667,8 @@ export async function modifierSoin(req, res) {
     
     // Si des médicaments sont fournis, MAJ les associations
     if (medicaments && Array.isArray(medicaments)) {
+      console.log("Traitement des médicaments:", JSON.stringify(medicaments));
+      
       // suppr les associations existantes
       await connection.query(
         "DELETE FROM Medicament_Soin WHERE id_soin = ?",
@@ -1656,6 +1677,8 @@ export async function modifierSoin(req, res) {
       
       // Ajout des nouvelles associations
       for (const med of medicaments) {
+        console.log("Traitement du médicament:", JSON.stringify(med));
+        
         if (!med.id_medicament || !med.quantite) {
           await connection.rollback();
           connection.release();
@@ -1665,6 +1688,7 @@ export async function modifierSoin(req, res) {
           });
         }
         
+        // Vérifier si le médicament existe
         const [medicament] = await connection.query(
           "SELECT * FROM Medicament WHERE id_medicament = ?",
           [med.id_medicament]
@@ -1679,15 +1703,26 @@ export async function modifierSoin(req, res) {
           });
         }
         
-        await connection.query(
-          "INSERT INTO Medicament_Soin (id_soin, id_medicament, quantite) VALUES (?, ?, ?)",
-          [idSoin, med.id_medicament, med.quantite]
-        );
+        console.log(`Ajout du médicament ${med.id_medicament} avec quantité ${med.quantite}`);
+        
+        // Tentative d'insertion
+        try {
+          await connection.query(
+            "INSERT INTO Medicament_Soin (id_soin, id_medicament, quantite) VALUES (?, ?, ?)",
+            [idSoin, med.id_medicament, med.quantite]
+          );
+        } catch (insertError) {
+          console.error("Erreur lors de l'insertion du médicament:", insertError);
+          throw insertError; // Propagation de l'erreur pour rollback
+        }
       }
+    } else {
+      console.log("Aucun médicament fourni ou format incorrect");
     }
     
     await connection.commit();
     
+    // Récupérer les données mises à jour pour les renvoyer
     const [soinModifie] = await connection.query(`
       SELECT 
         s.id_soin, 
