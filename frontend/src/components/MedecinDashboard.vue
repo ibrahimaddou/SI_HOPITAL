@@ -61,6 +61,14 @@
         Ajouter Reunion
         </button>
         <button 
+          @click="activeComponent = 'AfficherReunions'"
+          class="nav-button"
+          :class="{'active': activeComponent === 'AfficherReunions'}"
+        >
+        Afficher Reunions
+        </button>
+        
+        <button 
           @click="activeComponent = 'AjouterSoin'"
           class="nav-button"
           :class="{'active': activeComponent === 'AjouterSoin'}"
@@ -125,6 +133,7 @@ import ModifierSoin from "./Medecin/ModifierSoin.vue";
 import AfficherChambresService from "./Medecin/AfficherChambresService.vue";
 import DetailReunionSoin from "./Medecin/DetailReunionSoin.vue";
 import SupprimerReunion from "./Medecin/SupprimerReunion.vue";
+import AfficherReunions from "./Medecin/AfficherReunions.vue";
 
 export default {
   name: "MedecinDashboard",
@@ -141,7 +150,8 @@ export default {
     ModifierSoin,
     AfficherChambresService,
     DetailReunionSoin,
-    SupprimerReunion
+    SupprimerReunion,
+    AfficherReunions,
   },
   data() {
     return {
