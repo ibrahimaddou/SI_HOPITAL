@@ -1198,6 +1198,7 @@ export async function supprimerReunion(idReunion) {
   }
 }
 //supprimer visiteMed
+// Fonction à ajouter dans database.js
 export async function supprimerVisiteMedicale(idVisite) {
   try {
     await pool.query('START TRANSACTION');
@@ -1209,6 +1210,15 @@ export async function supprimerVisiteMedicale(idVisite) {
     
     if (visiteExists.length === 0) {
       throw new Error("La visite médicale spécifiée n'existe pas");
+    }
+    
+    // Vérifier si la visite n'a pas encore eu lieu (la date est dans le futur)
+    const visite = visiteExists[0];
+    const dateVisite = new Date(visite.date_visite);
+    const maintenant = new Date();
+    
+    if (dateVisite <= maintenant) {
+      throw new Error("Impossible de supprimer une visite médicale déjà effectuée");
     }
     
     // Supprimer la visite médicale
