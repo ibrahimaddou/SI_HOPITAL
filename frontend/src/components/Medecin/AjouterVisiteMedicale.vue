@@ -1,343 +1,417 @@
 <template>
-    <div class="container mx-auto p-4">
-      <h2 class="text-xl font-bold mb-4">Ajouter un compte-rendu de visite médicale</h2>
-      
-      <form @submit.prevent="soumettreFormulaire" class="bg-white p-4 rounded shadow">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <!-- Informations de base -->
-          <div>
-            <h3 class="font-semibold mb-2">Informations générales</h3>
-            
-            <div class="mb-3">
-              <label class="block mb-1">Patient *</label>
-              <select 
-                v-model="visite.id_patient" 
-                required
-                class="w-full p-2 border rounded"
-              >
-                <option value="">Sélectionnez un patient</option>
-                <option v-for="patient in patients" :key="patient.id_patient" :value="patient.id_patient">
-                  {{ patient.nom }} {{ patient.prenom }}
-                </option>
-              </select>
-            </div>
-            
-            <div class="mb-3">
-              <label class="block mb-1">Médecin *</label>
-              <select 
-                v-model="visite.id_medecin" 
-                required
-                class="w-full p-2 border rounded"
-              >
-                <option value="">Sélectionnez un médecin</option>
-                <option v-for="medecin in medecins" :key="medecin.id_medecin" :value="medecin.id_medecin">
-                  Dr. {{ medecin.nom }} {{ medecin.prenom }} ({{ medecin.specialite }})
-                </option>
-              </select>
-            </div>
-            
-            <div class="mb-3">
-              <label class="block mb-1">Date de la visite *</label>
-              <input 
-                v-model="visite.date_visite" 
-                type="datetime-local" 
-                required
-                class="w-full p-2 border rounded"
-              />
-            </div>
-            
-            <div class="mb-3">
-              <label class="block mb-1">Séjour associé (optionnel)</label>
-              <select 
-                v-model="visite.id_sejour" 
-                class="w-full p-2 border rounded"
-              >
-                <option value="">Aucun séjour associé</option>
-                <option v-for="sejour in sejours" :key="sejour.id_sejour" :value="sejour.id_sejour">
-                  Séjour #{{ sejour.id_sejour }} - {{ formatDate(sejour.date_arrivee) }}
-                </option>
-              </select>
-            </div>
-          </div>
-          
-          <!-- Compte-rendu -->
-          <div>
-            <h3 class="font-semibold mb-2">Compte-rendu médical</h3>
-            
-            <div class="mb-3">
-              <label class="block mb-1">Compte-rendu de la visite *</label>
-              <textarea 
-                v-model="visite.compte_rendu" 
-                required
-                class="w-full p-2 border rounded"
-                rows="9"
-              ></textarea>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Section Diagnostics -->
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold">Diagnostics</h3>
-            <button 
-              type="button" 
-              @click="ajouterDiagnostic"
-              class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-            >
-              Ajouter un diagnostic
-            </button>
-          </div>
-          
-          <div class="bg-gray-50 p-3 rounded border">
-            <div v-if="visite.diagnostics.length === 0" class="text-gray-500 italic">
-              Aucun diagnostic ajouté
-            </div>
-            
-            <div v-for="(diagnostic, index) in visite.diagnostics" :key="index" class="grid grid-cols-12 gap-2 mb-2">
-              <div class="col-span-3">
-                <input 
-                  v-model="diagnostic.code" 
-                  type="text" 
-                  placeholder="Code (ex: J45.9)" 
-                  class="w-full p-2 border rounded"
-                />
-              </div>
-              <div class="col-span-8">
-                <input 
-                  v-model="diagnostic.description" 
-                  type="text" 
-                  placeholder="Description du diagnostic" 
-                  class="w-full p-2 border rounded"
-                />
-              </div>
-              <div class="col-span-1 flex items-center">
-                <button 
-                  type="button" 
-                  @click="supprimerDiagnostic(index)"
-                  class="p-1 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Section Prescriptions -->
-        <div class="mb-4">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-semibold">Prescriptions</h3>
-            <button 
-              type="button" 
-              @click="ajouterPrescription"
-              class="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-            >
-              Ajouter une prescription
-            </button>
-          </div>
-          
-          <div class="bg-gray-50 p-3 rounded border">
-            <div v-if="visite.prescriptions.length === 0" class="text-gray-500 italic">
-              Aucune prescription ajoutée
-            </div>
-            
-            <div v-for="(prescription, index) in visite.prescriptions" :key="index" class="grid grid-cols-12 gap-2 mb-2">
-              <div class="col-span-3">
-                <input 
-                  v-model="prescription.medicament" 
-                  type="text" 
-                  placeholder="Médicament" 
-                  class="w-full p-2 border rounded"
-                />
-              </div>
-              <div class="col-span-4">
-                <input 
-                  v-model="prescription.posologie" 
-                  type="text" 
-                  placeholder="Posologie (ex: 1cp 3x/jour)" 
-                  class="w-full p-2 border rounded"
-                />
-              </div>
-              <div class="col-span-4">
-                <input 
-                  v-model="prescription.duree" 
-                  type="text" 
-                  placeholder="Durée (ex: 7 jours)" 
-                  class="w-full p-2 border rounded"
-                />
-              </div>
-              <div class="col-span-1 flex items-center">
-                <button 
-                  type="button" 
-                  @click="supprimerPrescription(index)"
-                  class="p-1 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="mt-4">
-          <button 
-            type="submit" 
-            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            :disabled="envoiEnCours"
-          >
-            {{ envoiEnCours ? 'Enregistrement...' : 'Enregistrer' }}
-          </button>
-        </div>
-        
-        <div v-if="message" class="mt-4 p-2 rounded" :class="messageClasse">
-          {{ message }}
-        </div>
-      </form>
+  <div class="ajouter-visite">
+    <h2>Planifier une visite médicale</h2>
+    
+    <!-- Message d'alerte -->
+    <div v-if="message" class="alert">
+      {{ message.text }}
     </div>
-  </template>
-  
-  <script>
-  import axios from "axios";
-  
-  export default {
-    data() {
-      return {
-        visite: {
-          id_patient: "",
-          id_medecin: "",
-          date_visite: new Date().toISOString().slice(0, 16),
-          compte_rendu: "",
-          id_sejour: "",
-          diagnostics: [],
-          prescriptions: []
-        },
-        patients: [],
-        medecins: [],
-        sejours: [],
-        envoiEnCours: false,
-        message: "",
-        messageClasse: ""
-      };
-    },
-    mounted() {
-      this.chargerDonnees();
-    },
-    methods: {
-      chargerDonnees() {
-        // Charger les patients
-        axios.get("http://localhost:3002/patients")
-          .then(response => {
-            this.patients = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des patients:", error);
-            this.afficherMessage("Erreur lors du chargement des patients", "error");
-          });
+    
+    <form @submit.prevent="submitForm" class="visite-form">
+      <div class="form-section">
+        <h3>Informations générales</h3>
         
-        // Charger les médecins
-        axios.get("http://localhost:3002/medecins")
-          .then(response => {
-            this.medecins = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des médecins:", error);
-            this.afficherMessage("Erreur lors du chargement des médecins", "error");
-          });
+        <div class="form-group">
+          <label for="patient">Patient :</label>
+          <select 
+            id="patient" 
+            v-model="formData.idPatient" 
+            class="form-control"
+            required
+          >
+            <option value="">Sélectionnez un patient</option>
+            <option v-for="patient in patients" :key="patient.id_patient" :value="patient.id_patient">
+              {{ patient.nom }} {{ patient.prenom }}
+            </option>
+          </select>
+        </div>
         
-        // Charger les séjours actifs
-        axios.get("http://localhost:3002/sejours/actifs")
-          .then(response => {
-            this.sejours = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des séjours:", error);
-            this.afficherMessage("Erreur lors du chargement des séjours", "error");
-          });
-      },
-      
-      ajouterDiagnostic() {
-        this.visite.diagnostics.push({ code: "", description: "" });
-      },
-      
-      supprimerDiagnostic(index) {
-        this.visite.diagnostics.splice(index, 1);
-      },
-      
-      ajouterPrescription() {
-        this.visite.prescriptions.push({ medicament: "", posologie: "", duree: "" });
-      },
-      
-      supprimerPrescription(index) {
-        this.visite.prescriptions.splice(index, 1);
-      },
-      
-      soumettreFormulaire() {
-        // Vérification des champs obligatoires
-        if (!this.visite.id_patient || !this.visite.id_medecin || !this.visite.date_visite || !this.visite.compte_rendu) {
-          this.afficherMessage("Veuillez remplir tous les champs obligatoires", "error");
-          return;
-        }
+        <div class="form-group">
+          <label for="medecin">Médecin :</label>
+          <select 
+            id="medecin" 
+            v-model="formData.idMedecin" 
+            class="form-control"
+            required
+          >
+            <option value="">Sélectionnez un médecin</option>
+            <option v-for="medecin in medecins" :key="medecin.id_personne" :value="medecin.id_personne">
+              {{ medecin.nom }} {{ medecin.prenom }} ({{ medecin.specialite }})
+            </option>
+          </select>
+        </div>
         
-        this.envoiEnCours = true;
-        this.message = "";
+        <div class="form-row">
+          <div class="form-group">
+            <label for="date-visite">Date de la visite :</label>
+            <input 
+              type="date" 
+              id="date-visite" 
+              v-model="formData.dateVisiteDate" 
+              class="form-control"
+              required
+              :min="minDate"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="heure-visite">Heure de la visite :</label>
+            <input 
+              type="time" 
+              id="heure-visite" 
+              v-model="formData.dateVisiteTime" 
+              class="form-control"
+              required
+            >
+          </div>
+        </div>
         
-        axios
-          .post("http://localhost:3002/ajouterVisiteMedicale", this.visite)
-          .then(() => {
-            this.afficherMessage("Visite médicale ajoutée avec succès", "success");
-            this.reinitialiserFormulaire();
-          })
-          .catch(error => {
-            console.error("Erreur lors de l'ajout:", error);
-            this.afficherMessage(
-              "Erreur lors de l'ajout de la visite médicale: " + 
-              (error.response?.data?.error || error.message), 
-              "error"
-            );
-          })
-          .finally(() => {
-            this.envoiEnCours = false;
-          });
-      },
+        <div class="form-group" v-if="patientSejours.length > 0">
+          <label for="sejour">Séjour associé (optionnel) :</label>
+          <select 
+            id="sejour" 
+            v-model="formData.idSejour" 
+            class="form-control"
+          >
+            <option value="">Aucun séjour spécifique</option>
+            <option v-for="sejour in patientSejours" :key="sejour.id_sejour" :value="sejour.id_sejour">
+              Séjour du {{ formatDate(sejour.date_arrivee) }} 
+              {{ sejour.date_sortie_reelle ? `au ${formatDate(sejour.date_sortie_reelle)}` : '(en cours)' }}
+            </option>
+          </select>
+        </div>
+      </div>
       
-      afficherMessage(message, type) {
-        this.message = message;
-        if (type === "error") {
-          this.messageClasse = "bg-red-100 text-red-700 border border-red-500";
-        } else {
-          this.messageClasse = "bg-green-100 text-green-700 border border-green-500";
-        }
-      },
+      <div class="form-section">
+        <h3>Détails de la visite</h3>
+        
+        <div class="form-group">
+          <label for="compte-rendu">Compte-rendu préliminaire :</label>
+          <textarea 
+            id="compte-rendu" 
+            v-model="formData.compteRendu" 
+            class="form-control"
+            rows="4"
+            placeholder="Décrivez le motif de la visite et les objectifs..."
+            required
+          ></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="examens">Examens prévus :</label>
+          <textarea 
+            id="examens" 
+            v-model="formData.examens" 
+            class="form-control"
+            rows="3"
+            placeholder="Listez les examens qui seront effectués..."
+          ></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="prescriptions">Prescriptions prévues :</label>
+          <textarea 
+            id="prescriptions" 
+            v-model="formData.prescriptions" 
+            class="form-control"
+            rows="3"
+            placeholder="Listez les prescriptions envisagées..."
+          ></textarea>
+        </div>
+      </div>
       
-      reinitialiserFormulaire() {
-        this.visite = {
-          id_patient: "",
-          id_medecin: "",
-          date_visite: new Date().toISOString().slice(0, 16),
-          compte_rendu: "",
-          id_sejour: "",
-          diagnostics: [],
-          prescriptions: []
-        };
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" @click="resetForm">Annuler</button>
+        <button type="submit" class="btn-save" :disabled="!isFormValid">Planifier la visite</button>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  name: 'AjouterVisiteMedicale',
+  data() {
+    return {
+      patients: [],
+      medecins: [],
+      sejours: [],
+      message: null,
+      formData: {
+        idPatient: '',
+        idMedecin: '',
+        dateVisiteDate: '',
+        dateVisiteTime: '09:00',
+        idSejour: '',
+        compteRendu: '',
+        examens: '',
+        prescriptions: ''
       },
-      
-      formatDate(date) {
-        if (!date) return '';
-        const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
-        return new Date(date).toLocaleDateString('fr-FR', options);
+      loading: {
+        patients: false,
+        medecins: false,
+        sejours: false,
+        submit: false
       }
+    };
+  },
+  computed: {
+    minDate() {
+      // La date d'aujourd'hui au format YYYY-MM-DD pour le champ date
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    },
+    patientSejours() {
+      // Filtrer les séjours du patient sélectionné
+      if (!this.formData.idPatient) return [];
+      return this.sejours.filter(sejour => sejour.id_patient == this.formData.idPatient);
+    },
+    isFormValid() {
+      return (
+        this.formData.idPatient && 
+        this.formData.idMedecin && 
+        this.formData.dateVisiteDate && 
+        this.formData.dateVisiteTime && 
+        this.formData.compteRendu
+      );
     }
-  };
-  </script>
-  
-  <style scoped>
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #4f46e5;
+  },
+  mounted() {
+    console.log("Composant AjouterVisiteMedicale monté");
+    this.fetchPatients();
+    this.fetchMedecins();
+    this.fetchSejours();
+    
+    // Initialiser la date à aujourd'hui
+    this.formData.dateVisiteDate = new Date().toISOString().split('T')[0];
+  },
+  methods: {
+    async fetchPatients() {
+      try {
+        this.loading.patients = true;
+        console.log("Récupération des patients...");
+        const response = await axios.get('http://localhost:3002/patients');
+        this.patients = response.data;
+        console.log("Patients récupérés:", this.patients);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des patients:", error);
+        this.message = {
+          type: 'error',
+          text: "Erreur lors du chargement des patients. Veuillez réessayer."
+        };
+      } finally {
+        this.loading.patients = false;
+      }
+    },
+    
+    async fetchMedecins() {
+      try {
+        this.loading.medecins = true;
+        console.log("Récupération des médecins...");
+        const response = await axios.get('http://localhost:3002/medecins');
+        this.medecins = response.data;
+        console.log("Médecins récupérés:", this.medecins);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des médecins:", error);
+        this.message = {
+          type: 'error',
+          text: "Erreur lors du chargement des médecins. Veuillez réessayer."
+        };
+      } finally {
+        this.loading.medecins = false;
+      }
+    },
+    
+    async fetchSejours() {
+      try {
+        this.loading.sejours = true;
+        console.log("Récupération des séjours...");
+        const response = await axios.get('http://localhost:3002/sejours');
+        this.sejours = response.data;
+        console.log("Séjours récupérés:", this.sejours);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des séjours:", error);
+        this.message = {
+          type: 'error',
+          text: "Erreur lors du chargement des séjours. Veuillez réessayer."
+        };
+      } finally {
+        this.loading.sejours = false;
+      }
+    },
+    
+    resetForm() {
+      this.formData = {
+        idPatient: '',
+        idMedecin: '',
+        dateVisiteDate: new Date().toISOString().split('T')[0],
+        dateVisiteTime: '09:00',
+        idSejour: '',
+        compteRendu: '',
+        examens: '',
+        prescriptions: ''
+      };
+      
+      this.message = null;
+    },
+    
+    async submitForm() {
+  if (!this.isFormValid) {
+    this.message = {
+      type: 'error',
+      text: "Veuillez remplir tous les champs obligatoires."
+    };
+    return;
   }
-  </style>
+  
+  try {
+    this.loading.submit = true;
+    
+    // Combiner la date et l'heure en un format ISO sans millisecondes
+    const dateVisite = new Date(`${this.formData.dateVisiteDate}T${this.formData.dateVisiteTime}`);
+    // Format compatible avec ce qui fonctionne dans Postman
+    const dateVisiteString = dateVisite.toISOString().split('.')[0];
+    
+    const requestData = {
+      idPatient: this.formData.idPatient,
+      idMedecin: this.formData.idMedecin,
+      dateVisite: dateVisiteString,
+      compteRendu: this.formData.compteRendu,
+      diagnostics: this.formData.examens || "", // Jamais null
+      prescriptions: this.formData.prescriptions || ""
+      // Ne pas inclure idSejour du tout
+    };
+    
+    console.log("Envoi des données pour créer une visite:", requestData);
+    
+    const response = await axios.post('http://localhost:3002/afficherVisitesMedicales', requestData);
+    
+    console.log("Réponse du serveur:", response);
+    
+    this.message = {
+      type: 'success',
+      text: "La visite médicale a été planifiée avec succès."
+    };
+    
+    // Réinitialiser le formulaire après un succès
+    this.resetForm();
+    
+  } catch (error) {
+    // Reste du code inchangé
+  }
+},
+    
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date);
+    }
+  }
+};
+</script>
+
+<style scoped>
+.ajouter-visite {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.alert {
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+}
+
+.visite-form {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.form-section {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.form-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+textarea.form-control {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-cancel {
+  background-color: #ccc;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-save {
+  background-color: #ddd;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-cancel:hover, .btn-save:hover {
+  background-color: #bbb;
+}
+</style>

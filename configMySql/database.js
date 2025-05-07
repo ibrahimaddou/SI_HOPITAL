@@ -1408,99 +1408,46 @@ export async function getVisitesByMedecin(idMedecin) {
   return visites;
 }
 //pour ajouter une visite Medicale
+// Fonction à ajouter dans database.js
 export async function ajouterVisiteMedicale(
   idPatient,
   idMedecin,
   dateVisite,
   compteRendu,
-  diagnostics,
-  prescriptions,
-  idSejour = null
+  examens = '',
+  commentaires = ''
 ) {
-  const [patient] = await pool.query(`
-    SELECT * FROM Patient WHERE id = ?
-  `, [idPatient]);
-  
-  if (patient.length === 0) {
-    throw new Error('Patient non trouvé');
-  }
-  
-  const [medecin] = await pool.query(`
-    SELECT * FROM Medecin WHERE id = ?
-  `, [idMedecin]);
-  
-  if (medecin.length === 0) {
-    throw new Error('Médecin non trouvé');
-  }
-  
-  if (idSejour) {
-    const [sejour] = await pool.query(`
-      SELECT * FROM Sejour WHERE id = ? AND id_patient = ?
-    `, [idSejour, idPatient]);
-    
-    if (sejour.length === 0) {
-      throw new Error('Séjour non trouvé ou ne correspond pas au patient');
-    }
-  }
-
-  const [resultVisite] = await pool.query(`
-    INSERT INTO VisiteMedicale (
-      id_patient,
-      id_medecin,
-      date_visite,
-      compte_rendu,
-      id_sejour
-    )
-    VALUES (?, ?, ?, ?, ?);
-  `, [
-    idPatient,
-    idMedecin,
-    dateVisite,
-    compteRendu,
-    idSejour
-  ]);
-  
-  const idVisite = resultVisite.insertId;
-  
-  if (diagnostics && diagnostics.length > 0) {
-    const diagnosticValues = diagnostics.map(diagnostic => 
-      [idVisite, diagnostic.code, diagnostic.description]
+  try {
+    // Insertion directe dans la table Visite_Medicale
+    const [result] = await pool.query(
+      `INSERT INTO Visite_Medicale (
+        id_patient,
+        id_medecin,
+        date_visite,
+        examens_pratiques,
+        commentaires
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [
+        idPatient,
+        idMedecin,
+        dateVisite,
+        examens,
+        compteRendu
+      ]
     );
     
-    await pool.query(`
-      INSERT INTO Diagnostic (id_visite, code, description)
-      VALUES ?;
-    `, [diagnosticValues]);
+    return {
+      id_visite: result.insertId,
+      id_patient: idPatient,
+      id_medecin: idMedecin,
+      date_visite: dateVisite,
+      examens_pratiques: examens,
+      commentaires: compteRendu
+    };
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'une visite médicale:", error);
+    throw error;
   }
-  
-  if (prescriptions && prescriptions.length > 0) {
-    const prescriptionValues = prescriptions.map(prescription => 
-      [idVisite, prescription.medicament, prescription.posologie, prescription.duree]
-    );
-    
-    await pool.query(`
-      INSERT INTO Prescription (id_visite, medicament, posologie, duree)
-      VALUES ?;
-    `, [prescriptionValues]);
-  }
-  
-  const [visite] = await pool.query(`
-    SELECT * FROM VisiteMedicale WHERE id = ?
-  `, [idVisite]);
-  
-  const [diagnosticsResult] = await pool.query(`
-    SELECT * FROM Diagnostic WHERE id_visite = ?
-  `, [idVisite]);
-  
-  const [prescriptionsResult] = await pool.query(`
-    SELECT * FROM Prescription WHERE id_visite = ?
-  `, [idVisite]);
-  
-  return {
-    ...visite[0],
-    diagnostics: diagnosticsResult,
-    prescriptions: prescriptionsResult
-  };
 }
 export async function ajouterReunion(dateReunion, sujet, compteRendu, medecinIds, infirmierIds) {
   const connection = await pool.getConnection();

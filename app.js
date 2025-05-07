@@ -11,7 +11,7 @@ import {
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
     getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDisponiblesById,
-    supprimerVisiteMedicale
+    supprimerVisiteMedicale,ajouterVisiteMedicale
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -396,7 +396,7 @@ app.get("/visitesMedecin/:id", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - récupération des visites du médecin" });
   }
 });
-app.post("/ajouterVisiteMedicale", async (req, res) => {
+app.post("/afficherVisitesMedicales", async (req, res) => {
   try {
     const {
       idPatient,
@@ -404,39 +404,34 @@ app.post("/ajouterVisiteMedicale", async (req, res) => {
       dateVisite,
       compteRendu,
       diagnostics,
-      prescriptions,
-      idSejour
+      prescriptions
     } = req.body;
     
+    // Vérification minimale des champs obligatoires
     if (!idPatient || !idMedecin || !dateVisite || !compteRendu) {
-      return res.status(400).send({
-        error: "L'ID du patient, l'ID du médecin, la date de visite et le compte-rendu sont obligatoires"
+      return res.status(400).json({ 
+        error: "Champs obligatoires manquants"
       });
     }
     
-    const visiteResult = await ajouterVisiteMedicale(
+    // Appel de la fonction avec les paramètres minimaux
+    const result = await ajouterVisiteMedicale(
       idPatient,
       idMedecin,
       dateVisite,
       compteRendu,
-      diagnostics,
-      prescriptions,
-      idSejour
+      diagnostics || prescriptions || ''  // Utiliser diagnostics ou prescriptions comme examens
     );
     
-    res.status(201).send(visiteResult);
+    res.status(201).json(result);
+    
   } catch (error) {
-    console.error("Erreur lors de l'ajout de la visite médicale! ", error);
-    
-    if (error.message) {
-      if (error.message.includes("Patient non trouvé") || 
-          error.message.includes("Médecin non trouvé") || 
-          error.message.includes("Séjour non trouvé")) {
-        return res.status(404).send({ error: error.message });
-      }
-    }
-    
-    res.status(500).send({ error: "Erreur serveur - ajout de la visite médicale" });
+    console.error("Erreur lors de l'ajout de la visite médicale:", error);
+    // Capturer et retourner l'erreur SQL pour le débogage
+    res.status(500).json({
+      error: "Erreur serveur - ajout de la visite médicale",
+      details: error.message  // Inclure les détails de l'erreur pour le débogage
+    });
   }
 });
 app.post("/reunions", async (req, res) => {
