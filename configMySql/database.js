@@ -480,20 +480,67 @@ export async function getEtatOccupationService(idService, date) {
 }
 
 //ajouter patient
+/**
+ * Fonction pour ajouter un patient avec vérification qu'il n'est pas déjà membre du personnel
+ * Vérifie uniquement par ID (lors de la création en base de données)
+ */
 export async function ajouterPatient(nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux) {
-  const [resultPersonne] = await pool.query(`
-        INSERT INTO Personne (nom, prenom, date_naissance, adresse, telephone, email, type_personne) 
-        VALUES (?, ?, ?, ?, ?, ?, 'Patient');
-    `, [nom, prenom, dateNaissance, adresse, telephone, email]);
-  
-  const idPersonne = resultPersonne.insertId;
+  try {
+    // Démarrer une transaction
+    await pool.query('START TRANSACTION');
 
-  const [resultPatient] = await pool.query(`
-        INSERT INTO Patient (id_patient, antecedents_medicaux)
-        VALUES (?, ?);
-    `, [idPersonne, antecedentsMedicaux]);
-  
-  return resultPatient;
+    // Si on arrive ici, on peut procéder à l'ajout
+    // Insérer dans la table Personne
+    const [insertPersonneResult] = await pool.query(
+      "INSERT INTO Personne (nom, prenom, date_naissance, adresse, telephone, email, type_personne) VALUES (?, ?, ?, ?, ?, ?, 'Patient')",
+      [
+        nom,
+        prenom,
+        dateNaissance,
+        adresse || null,
+        telephone || null,
+        email || null
+      ]
+    );
+    
+    const personneId = insertPersonneResult.insertId;
+    
+    // Vérifier si l'ID est déjà utilisé dans la table Personnel
+    const [existingPersonnel] = await pool.query(
+      "SELECT id_personnel FROM Personnel WHERE id_personnel = ?",
+      [personneId]
+    );
+    
+    if (existingPersonnel.length > 0) {
+      throw new Error("Cette personne est déjà enregistrée comme membre du personnel et ne peut pas être ajoutée comme patient");
+    }
+
+    // Insérer dans la table Patient
+    await pool.query(
+      "INSERT INTO Patient (id_patient, antecedents_medicaux) VALUES (?, ?)",
+      [personneId, antecedentsMedicaux || null]
+    );
+    
+    // Valider la transaction
+    await pool.query('COMMIT');
+    
+    // Récupérer le patient complet pour le retourner
+    const [patientComplet] = await pool.query(
+      `SELECT p.id_personne as id_patient, p.nom, p.prenom, p.date_naissance, 
+              p.adresse, p.telephone, p.email, pa.antecedents_medicaux 
+       FROM Personne p 
+       JOIN Patient pa ON p.id_personne = pa.id_patient 
+       WHERE p.id_personne = ?`,
+      [personneId]
+    );
+    
+    return patientComplet[0];
+    
+  } catch (error) {
+    // Annuler la transaction en cas d'erreur
+    await pool.query('ROLLBACK');
+    throw error;
+  }
 }
 
 //ajouter personnel de nettoyage
@@ -969,62 +1016,73 @@ export async function ajouterAdministrationSoin(id_soin, id_infirmier, date_heur
 //supprimerPatient
 export async function supprimerPatient(idPatient) {
   try {
-    // transaction
+    // Démarrer la transaction
     await pool.query('START TRANSACTION');
-        const [patientExists] = await pool.query(
+    
+    // Vérifier si l'ID existe en tant que patient
+    const [patientExists] = await pool.query(
       "SELECT p.id_personne FROM Patient pa JOIN Personne p ON pa.id_patient = p.id_personne WHERE pa.id_patient = ?",
       [idPatient]
     );
-    
+   
     if (patientExists.length === 0) {
       throw new Error("Le patient spécifié n'existe pas");
     }
     
-    // suppression de tous qui est liées au patient
+    // IMPORTANT: Vérifier si cette personne est aussi membre du personnel
+    const [isAlsoPersonnel] = await pool.query(
+      "SELECT id_personnel FROM Personnel WHERE id_personnel = ?",
+      [idPatient]
+    );
+    
+    if (isAlsoPersonnel.length > 0) {
+      throw new Error("Cette personne est également enregistrée comme membre du personnel et ne peut pas être supprimée");
+    }
+   
+    // Suppression de tout ce qui est lié au patient
     await pool.query(`
       DELETE a FROM Administration_Soin a
       JOIN Soin s ON a.id_soin = s.id_soin
       WHERE s.id_patient = ?
     `, [idPatient]);
-    
+   
     await pool.query(`
       DELETE ms FROM Medicament_Soin ms
       JOIN Soin s ON ms.id_soin = s.id_soin
       WHERE s.id_patient = ?
     `, [idPatient]);
-    
    
     await pool.query(
       "DELETE FROM Soin WHERE id_patient = ?",
       [idPatient]
     );
-    
+   
     await pool.query(
       "DELETE FROM Visite_Medicale WHERE id_patient = ?",
       [idPatient]
     );
-    
+   
     await pool.query(
       "DELETE FROM Sejour WHERE id_patient = ?",
       [idPatient]
     );
-    
+   
     await pool.query(
       "DELETE FROM Patient WHERE id_patient = ?",
       [idPatient]
     );
-    
+   
     await pool.query(
       "DELETE FROM Personne WHERE id_personne = ?",
       [idPatient]
     );
-    
-    //pour  valider toutes les modifications
+   
+    // Valider toutes les modifications
     await pool.query('COMMIT');
-    
-    return { success: true, message: "patient et les données associées supprimés avec succès" };
+   
+    return { success: true, message: "Patient et les données associées supprimés avec succès" };
   } catch (error) {
-    // en cas d'erreur annulation de toutes les modifications
+    // En cas d'erreur, annulation de toutes les modifications
     await pool.query('ROLLBACK');
     throw error;
   }

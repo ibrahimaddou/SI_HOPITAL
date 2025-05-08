@@ -1,250 +1,114 @@
 <template>
-  <div class="container mx-auto p-4">
-    <h2 class="text-xl font-bold mb-4">Supprimer un soin</h2>
+  <div class="suppression-soin">
+    <h2>Gestion des Soins</h2>
 
-    <!-- Message de résultat -->
-    <div v-if="message" class="mt-4 p-4 rounded" :class="messageClasse">
-      {{ message }}
+    <!-- Message d'alerte -->
+    <div v-if="message" class="alert">
+      {{ message.text }}
     </div>
 
-    <!-- Filtres de recherche -->
-    <div class="mb-6 bg-white p-4 rounded shadow">
-      <h3 class="font-semibold mb-3">Rechercher un soin</h3>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block mb-1">Patient</label>
-          <select
-            v-model="filtrePatient"
-            class="w-full p-2 border rounded"
-            @change="rechercherSoins"
-          >
-            <option value="">Tous les patients</option>
-            <option
-              v-for="patient in patients"
-              :key="patient.id_patient"
-              :value="patient.id_patient"
-            >
-              {{ patient.nom }} {{ patient.prenom }}
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block mb-1">Type de soin</label>
-          <select
-            v-model="filtreType"
-            class="w-full p-2 border rounded"
-            @change="rechercherSoins"
-          >
-            <option value="">Tous les types</option>
-            <option value="traitement">Traitements médicamenteux</option>
-            <option value="surveillance">Surveillance</option>
-            <option value="operation">Opérations</option>
-            <option value="rééducation">Rééducation</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block mb-1">Afficher uniquement</label>
-          <select
-            v-model="filtreStatut"
-            class="w-full p-2 border rounded"
-            @change="rechercherSoins"
-          >
-            <option value="">Tous les soins</option>
-            <option value="actifs">
-              Soins actifs (non commencés ou en cours)
-            </option>
-            <option value="planifies">Soins planifiés (non commencés)</option>
-            <option value="termines">Soins terminés</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Liste des soins -->
-    <div class="bg-white rounded shadow overflow-hidden">
-      <div v-if="chargement" class="text-center py-8">
-        <div
-          class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"
-        ></div>
-        <p class="mt-2 text-gray-600">Chargement des soins...</p>
-      </div>
-
-      <div
-        v-else-if="soins.length === 0"
-        class="text-center py-8 text-gray-500"
-      >
-        Aucun soin trouvé correspondant aux critères de recherche.
-      </div>
-
-      <div v-else class="divide-y divide-gray-200">
-        <div
-          v-for="soin in soins"
-          :key="soin.id_soin"
-          class="p-4 hover:bg-gray-50"
-          :class="{ 'bg-red-50': soinSelectionne === soin.id_soin }"
+    <!-- Contrôles de filtrage -->
+    <div class="filter-controls">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Rechercher un soin..."
+        v-model="searchQuery"
+      />
+      <select v-model="filterPatient" class="filter-select">
+        <option value="all">Tous les patients</option>
+        <option
+          v-for="patient in uniquePatients"
+          :key="patient.id_patient"
+          :value="patient.id_patient"
         >
-          <div class="flex flex-col md:flex-row justify-between">
-            <div class="mb-2 md:mb-0">
-              <h4 class="font-semibold text-lg">{{ soin.description }}</h4>
-              <p class="text-gray-600">
-                <span class="font-medium">Patient :</span>
-                {{ soin.patient ? soin.patient.nom : "Inconnu" }}
-                {{ soin.patient ? soin.patient.prenom : "" }}
-              </p>
-              <p class="text-gray-600">
-                <span class="font-medium">Décidé lors de la réunion du :</span>
-                {{
-                  formatDate(soin.reunion ? soin.reunion.date_reunion : null)
-                }}
-              </p>
-
-              <div
-                v-if="soin.administrations && soin.administrations.length > 0"
-                class="mt-2"
-              >
-                <p class="font-medium">Administrations :</p>
-                <ul class="list-disc pl-5 text-sm">
-                  <li
-                    v-for="admin in soin.administrations.slice(0, 3)"
-                    :key="admin.id_administration"
-                  >
-                    {{ formatDateTime(admin.date_heure) }} par
-                    {{ admin.infirmier ? admin.infirmier.prenom : "Inconnu" }}
-                    {{ admin.infirmier ? admin.infirmier.nom : "" }}
-                  </li>
-                  <li v-if="soin.administrations.length > 3" class="italic">
-                    Et {{ soin.administrations.length - 3 }} autre(s)
-                    administration(s)...
-                  </li>
-                </ul>
-              </div>
-
-              <div
-                v-if="soin.medicaments && soin.medicaments.length > 0"
-                class="mt-2"
-              >
-                <p class="font-medium">Médicaments :</p>
-                <ul class="list-disc pl-5 text-sm">
-                  <li v-for="med in soin.medicaments" :key="med.id_medicament">
-                    {{ med.nom }} - {{ med.quantite }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="flex flex-col items-end justify-between">
-              <span
-                class="px-2 py-1 text-xs rounded-full mb-2"
-                :class="getStatutClass(soin)"
-              >
-                {{ getStatutLabel(soin) }}
-              </span>
-
-              <button
-                v-if="peutEtreSupprime(soin)"
-                @click="selectionnerSoin(soin.id_soin)"
-                class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-              >
-                Supprimer
-              </button>
-              <span v-else class="text-xs text-gray-500 italic">
-                {{ getRaisonNonSupprimable(soin) }}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+          {{ patient.nom_patient }} {{ patient.prenom_patient }}
+        </option>
+      </select>
     </div>
 
-    <!-- Modal de confirmation -->
-    <div
-      v-if="modalVisible"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-        <h3 class="text-lg font-bold mb-4 text-red-600">
-          Confirmation de suppression
-        </h3>
+    <!-- Tableau des soins -->
+    <table class="soins-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Description</th>
+          <th>Patient</th>
+          <th>Réunion</th>
+          <th>Médicaments</th>
+          <th>Administrations</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="loading">
+          <td colspan="7" class="centered">Chargement...</td>
+        </tr>
+        <tr v-else-if="filteredSoins.length === 0">
+          <td colspan="7" class="centered">Aucun soin trouvé</td>
+        </tr>
+        <tr v-for="soin in filteredSoins" :key="soin.id_soin">
+          <td>{{ soin.id_soin }}</td>
+          <td>{{ truncateText(soin.description, 30) }}</td>
+          <td>{{ soin.nom_patient }} {{ soin.prenom_patient }}</td>
+          <td>{{ formatDate(soin.date_reunion) }}</td>
+          <td>
+            <ul v-if="soin.medicaments && soin.medicaments.length">
+              <li v-for="(med, index) in soin.medicaments" :key="index">
+                {{ med.nom_medicament }} ({{ med.quantite }})
+              </li>
+            </ul>
+            <span v-else>Aucun médicament</span>
+          </td>
+          <td>{{ soin.administrations ? soin.administrations.length : 0 }}</td>
+          <td>
+            <button
+              class="btn-delete"
+              @click="confirmDelete(soin)"
+              :disabled="!canDeleteSoin(soin)"
+              title="Supprimer ce soin"
+            >
+              Supprimer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-        <div v-if="soinASupprimer">
-          <p class="mb-4">
-            Vous êtes sur le point de supprimer le soin suivant :
+    <!-- Modale personnalisée -->
+    <div v-if="showConfirmModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>Confirmation de suppression</h3>
+          <button class="close-button" @click="showConfirmModal = false">
+            ×
+          </button>
+        </div>
+        <div class="modal-body" v-if="selectedSoin">
+          <p>Êtes-vous sûr de vouloir supprimer le soin suivant :</p>
+          <ul>
+            <li>
+              <strong>Description :</strong> {{ selectedSoin.description }}
+            </li>
+            <li>
+              <strong>Patient :</strong> {{ selectedSoin.nom_patient }}
+              {{ selectedSoin.prenom_patient }}
+            </li>
+            <li>
+              <strong>Planifié lors de la réunion du :</strong>
+              {{ formatDate(selectedSoin.date_reunion) }}
+            </li>
+          </ul>
+          <p class="warning">
+            Cette action est irréversible. Un soin déjà administré ne peut pas
+            être supprimé.
           </p>
-
-          <div class="mb-4 bg-gray-50 p-3 rounded">
-            <p>
-              <span class="font-semibold">Description :</span>
-              {{ soinASupprimer.description }}
-            </p>
-            <p>
-              <span class="font-semibold">Patient :</span>
-              {{
-                soinASupprimer.patient ? soinASupprimer.patient.nom : "Inconnu"
-              }}
-              {{ soinASupprimer.patient ? soinASupprimer.patient.prenom : "" }}
-            </p>
-            <p
-              v-if="
-                soinASupprimer.medicaments &&
-                soinASupprimer.medicaments.length > 0
-              "
-            >
-              <span class="font-semibold">Médicaments :</span>
-              {{ soinASupprimer.medicaments.map((m) => m.nom).join(", ") }}
-            </p>
-          </div>
-
-          <div class="mb-4">
-            <label class="block font-semibold mb-2"
-              >Raison de la suppression :</label
-            >
-            <textarea
-              v-model="raisonSuppression"
-              rows="3"
-              required
-              class="w-full p-2 border rounded"
-              placeholder="Précisez pourquoi ce soin doit être supprimé"
-            ></textarea>
-          </div>
-
-          <div class="flex items-center mb-4">
-            <input
-              v-model="confirmationSuppression"
-              type="checkbox"
-              id="confirmation"
-              class="mr-2"
-            />
-            <label for="confirmation"
-              >Je confirme vouloir supprimer définitivement ce soin</label
-            >
-          </div>
-
-          <div class="flex justify-end space-x-3">
-            <button
-              @click="fermerModal"
-              class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              Annuler
-            </button>
-            <button
-              @click="confirmerSuppression"
-              class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
-              :disabled="
-                !raisonSuppression ||
-                !confirmationSuppression ||
-                suppressionEnCours
-              "
-            >
-              {{
-                suppressionEnCours
-                  ? "Suppression en cours..."
-                  : "Supprimer définitivement"
-              }}
-            </button>
-          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="showConfirmModal = false">
+            Annuler
+          </button>
+          <button class="btn-confirm" @click="executeDelete">Supprimer</button>
         </div>
       </div>
     </div>
@@ -259,20 +123,12 @@ export default {
   data() {
     return {
       soins: [],
-      patients: [],
-      filtrePatient: "",
-      filtreType: "",
-      filtreStatut: "actifs",
-      soinSelectionne: null,
-      soinASupprimer: null,
-      modalVisible: false,
-      raisonSuppression: "",
-      confirmationSuppression: false,
-      chargement: true,
-      suppressionEnCours: false,
-      message: "",
-      messageClasse: "",
+      loading: true,
+      message: null,
+      selectedSoin: null,
+      showConfirmModal: false,
       searchQuery: "",
+      filterPatient: "all",
     };
   },
   computed: {
@@ -298,180 +154,178 @@ export default {
         );
       });
     },
+    filteredSoins() {
+      let result = this.soins;
+
+      // Filtrage par patient
+      if (this.filterPatient !== "all") {
+        result = result.filter((soin) => soin.id_patient == this.filterPatient);
+      }
+
+      // Filtrage par recherche
+      if (this.searchQuery.trim() !== "") {
+        const query = this.searchQuery.toLowerCase();
+        result = result.filter((soin) => {
+          return (
+            (soin.description &&
+              soin.description.toLowerCase().includes(query)) ||
+            (soin.nom_patient &&
+              soin.nom_patient.toLowerCase().includes(query)) ||
+            (soin.prenom_patient &&
+              soin.prenom_patient.toLowerCase().includes(query)) ||
+            (soin.id_soin && soin.id_soin.toString().includes(query))
+          );
+        });
+      }
+
+      return result;
+    },
   },
   mounted() {
     console.log("Composant SupprimerSoin monté");
-    this.chargerPatients();
-    this.rechercherSoins();
+    this.fetchSoins();
   },
   methods: {
-    chargerPatients() {
-      axios
-        .get("http://localhost:3002/patients")
-        .then((response) => {
-          this.patients = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des patients:", error);
-        });
-    },
+    async fetchSoins() {
+      try {
+        this.loading = true;
+        console.log("Récupération des soins...");
+        const response = await axios.get("http://localhost:3002/soins");
+        console.log("Soins récupérés:", response.data);
 
-    rechercherSoins() {
-      this.chargement = true;
+        // Enrichir les données des soins avec plus d'informations
+        const enrichedSoins = await Promise.all(
+          response.data.map(async (soin) => {
+            try {
+              // Récupérer les détails du soin (médicaments, administrations, etc.)
+              const soinDetailResponse = await axios.get(
+                `http://localhost:3002/soins/${soin.id_soin}`
+              );
+              const soinDetail = soinDetailResponse.data;
 
-      let url = "http://localhost:3002/soins";
-      const params = new URLSearchParams();
-
-      if (this.filtrePatient) {
-        params.append("patient", this.filtrePatient);
-      }
-
-      if (this.filtreType) {
-        params.append("type", this.filtreType);
-      }
-
-      if (this.filtreStatut) {
-        params.append("statut", this.filtreStatut);
-      }
-
-      if (this.searchQuery && this.searchQuery.trim() !== "") {
-        params.append("search", this.searchQuery.trim());
-      }
-
-      if (params.toString()) {
-        url += "?" + params.toString();
-      }
-
-      axios
-        .get(url)
-        .then((response) => {
-          this.soins = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des soins:", error);
-          this.afficherMessage("Impossible de charger les soins", "error");
-        })
-        .finally(() => {
-          this.chargement = false;
-        });
-    },
-
-    formatDate(date) {
-      if (!date) return "";
-      const d = new Date(date);
-      return d.toLocaleDateString("fr-FR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    },
-
-    formatDateTime(dateTime) {
-      if (!dateTime) return "";
-      const d = new Date(dateTime);
-      return d.toLocaleString("fr-FR");
-    },
-
-    getStatutClass(soin) {
-      switch (soin.statut) {
-        case "actif":
-          return "bg-yellow-100 text-yellow-800";
-        case "termine":
-          return "bg-green-100 text-green-800";
-        case "annule":
-          return "bg-red-100 text-red-800";
-        default:
-          return "bg-gray-100 text-gray-800";
-      }
-    },
-
-    getStatutLabel(soin) {
-      switch (soin.statut) {
-        case "actif":
-          return "Actif";
-        case "termine":
-          return "Terminé";
-        case "annule":
-          return "Annulé";
-        default:
-          return "Non défini";
-      }
-    },
-
-    peutEtreSupprime(soin) {
-      // On peut supprimer uniquement les soins qui n'ont pas encore été administrés
-      return !soin.administrations || soin.administrations.length === 0;
-    },
-
-    getRaisonNonSupprimable(soin) {
-      if (soin.administrations && soin.administrations.length > 0) {
-        return "Ce soin a déjà été administré et ne peut pas être supprimé.";
-      }
-      if (soin.statut === "termine") {
-        return "Ce soin est terminé et ne peut pas être supprimé.";
-      }
-      return "Ce soin ne peut pas être supprimé pour d'autres raisons.";
-    },
-
-    selectionnerSoin(id) {
-      this.soinSelectionne = id;
-      this.soinASupprimer = this.soins.find((soin) => soin.id_soin === id);
-      this.modalVisible = true;
-    },
-
-    fermerModal() {
-      this.modalVisible = false;
-      this.soinASupprimer = null;
-      this.raisonSuppression = "";
-      this.confirmationSuppression = false;
-    },
-
-    confirmerSuppression() {
-      this.suppressionEnCours = true;
-
-      axios
-        .delete(
-          `http://localhost:3002/supprimerSoin/${this.soinASupprimer.id_soin}`,
-          {
-            data: { raison: this.raisonSuppression },
-          }
-        )
-        .then(() => {
-          this.afficherMessage("Soin supprimé avec succès", "success");
-          this.rechercherSoins(); // Recharge les soins après suppression
-          this.fermerModal();
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la suppression du soin:", error);
-
-          let errorMessage = "Erreur lors de la suppression du soin.";
-
-          if (error.response) {
-            console.log("Détails de l'erreur:", error.response);
-            if (error.response.data && error.response.data.message) {
-              errorMessage = error.response.data.message;
-            } else if (error.response.data && error.response.data.error) {
-              errorMessage = error.response.data.error;
+              return {
+                ...soin,
+                ...soinDetail,
+              };
+            } catch (error) {
+              console.error(
+                `Erreur lors de la récupération des détails du soin ${soin.id_soin}:`,
+                error
+              );
+              return soin;
             }
-          }
+          })
+        );
 
-          this.afficherMessage(errorMessage, "error");
-        })
-        .finally(() => {
-          this.suppressionEnCours = false;
-        });
+        console.log("Soins enrichis:", enrichedSoins);
+        this.soins = enrichedSoins;
+      } catch (error) {
+        console.error("Erreur lors de la récupération des soins:", error);
+        this.message = {
+          type: "error",
+          text: "Erreur lors du chargement des soins. Veuillez réessayer.",
+        };
+      } finally {
+        this.loading = false;
+      }
     },
 
-    afficherMessage(message, type) {
-      this.message = message;
-      this.messageClasse =
-        type === "error" ? "bg-red-500 text-white" : "bg-green-500 text-white";
+    confirmDelete(soin) {
+      console.log("Soin sélectionné pour suppression:", soin);
 
-      // Masquer le message après 5 secondes
-      setTimeout(() => {
-        this.message = "";
-        this.messageClasse = "";
-      }, 5000);
+      // Vérification que le soin peut être supprimé
+      if (!this.canDeleteSoin(soin)) {
+        this.message = {
+          type: "error",
+          text: "Ce soin ne peut pas être supprimé car il a déjà été administré.",
+        };
+        setTimeout(() => {
+          this.message = null;
+        }, 3000);
+        return;
+      }
+
+      // Stocker le soin sélectionné et afficher la modale
+      this.selectedSoin = soin;
+      this.showConfirmModal = true;
+    },
+
+    executeDelete() {
+      this.deleteSoin();
+      this.showConfirmModal = false;
+    },
+
+    async deleteSoin() {
+      if (!this.selectedSoin) {
+        console.error("Aucun soin sélectionné pour la suppression");
+        return;
+      }
+
+      console.log(
+        "Tentative de suppression du soin:",
+        this.selectedSoin.id_soin
+      );
+
+      try {
+        // Log avant la requête
+        console.log(
+          `Envoi de la requête DELETE à http://localhost:3002/supprimerSoin/${this.selectedSoin.id_soin}`
+        );
+
+        const response = await axios.delete(
+          `http://localhost:3002/supprimerSoin/${this.selectedSoin.id_soin}`
+        );
+
+        // Log après la requête
+        console.log("Réponse du serveur:", response);
+
+        // Mettre à jour la liste des soins sans recharger
+        this.soins = this.soins.filter(
+          (s) => s.id_soin !== this.selectedSoin.id_soin
+        );
+
+        this.message = {
+          type: "success",
+          text: `Le soin "${this.selectedSoin.description}" a été supprimé avec succès.`,
+        };
+
+        // Masquer le message après 5 secondes
+        setTimeout(() => {
+          this.message = null;
+        }, 5000);
+      } catch (error) {
+        console.error("Erreur lors de la suppression du soin:", error);
+
+        let errorMessage = "Erreur lors de la suppression du soin.";
+
+        if (error.response) {
+          console.log("Détails de l'erreur:", error.response);
+          if (error.response.data && error.response.data.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.data && error.response.data.error) {
+            errorMessage = error.response.data.error;
+          }
+        }
+
+        this.message = {
+          type: "error",
+          text: errorMessage,
+        };
+      } finally {
+        this.selectedSoin = null;
+      }
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return "-";
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat("fr-FR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
     },
 
     truncateText(text, maxLength) {
@@ -480,28 +334,176 @@ export default {
         ? text.substring(0, maxLength) + "..."
         : text;
     },
+
+    canDeleteSoin(soin) {
+      // On peut supprimer uniquement les soins qui n'ont pas encore été administrés
+      return !soin.administrations || soin.administrations.length === 0;
+    },
   },
 };
 </script>
 
 <style scoped>
-.animate-spin {
-  animation: spin 1s linear infinite;
+.suppression-soin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Filtres */
+.filter-controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
 }
 
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #4f46e5;
+.search-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.filter-select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+/* Tableau */
+.soins-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.soins-table th,
+.soins-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.soins-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.centered {
+  text-align: center;
+}
+
+/* Listes dans les cellules */
+.soins-table ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.soins-table li {
+  margin-bottom: 3px;
+}
+
+/* Boutons */
+.btn-delete {
+  background-color: #ccc;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background-color: #999;
+}
+
+.btn-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Messages */
+.alert {
+  padding: 10px 15px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  background-color: #f8f8f8;
+}
+
+.warning {
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* Modale personnalisée */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background-color: white;
+  border-radius: 5px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 15px;
+}
+
+.modal-footer {
+  padding: 15px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #ccc;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background-color: #ddd;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover,
+.btn-confirm:hover {
+  background-color: #bbb;
 }
 </style>

@@ -3,14 +3,7 @@
     <h2>Administrer un soin</h2>
 
     <!-- Message d'alerte -->
-    <div
-      v-if="message"
-      class="alert"
-      :class="{
-        'alert-success': message.type === 'success',
-        'alert-error': message.type === 'error',
-      }"
-    >
+    <div v-if="message" class="alert" :class="{'alert-success': message.type === 'success', 'alert-error': message.type === 'error'}">
       {{ message.text }}
     </div>
 
@@ -48,7 +41,7 @@
               Aucun soin à administrer n'a été trouvé
             </td>
           </tr>
-          <tr v-for="soin in filteredSoins" :key="soin.id_soin">
+          <tr v-for="soin in filteredSoins" :key="soin.id_soin" :class="{'soin-administre': soin.derniereAdministration}">
             <td>{{ soin.id_soin }}</td>
             <td>{{ soin.nom_patient }} {{ soin.prenom_patient }}</td>
             <td>{{ truncateText(soin.description, 50) }}</td>
@@ -59,20 +52,22 @@
               <span v-else>Aucun</span>
             </td>
             <td>
-              <span v-if="soin.derniereAdministration">
+              <span v-if="soin.derniereAdministration" class="date-administration">
                 {{ formatDate(soin.derniereAdministration) }}
               </span>
               <span v-else>Jamais administré</span>
             </td>
             <td>
-              <button
+              <button 
+                v-if="!soin.derniereAdministration" 
                 class="btn-administrer"
                 @click="selectSoin(soin)"
-                v-if="!soin.derniereAdministration"
               >
                 Administrer
               </button>
-              <span v-else class="deja-administre">Déjà administré</span>
+              <span v-else class="statut-administre">
+                Déjà administré
+              </span>
             </td>
           </tr>
         </tbody>
@@ -82,7 +77,11 @@
     <!-- Formulaire d'administration -->
     <div v-if="selectedSoin" class="administration-form-container">
       <div class="form-header">
-        <h3>Administrer le soin #{{ selectedSoin.id_soin }}</h3>
+        <h3>
+          <span v-if="selectedSoin.derniereAdministration">Administrer à nouveau</span>
+          <span v-else>Administrer</span>
+          le soin #{{ selectedSoin.id_soin }}
+        </h3>
         <button class="btn-back" @click="deselectSoin">
           Retour à la liste
         </button>
@@ -99,6 +98,11 @@
         <div class="info-group">
           <h4>Description du soin</h4>
           <p>{{ selectedSoin.description }}</p>
+        </div>
+        
+        <div v-if="selectedSoin.derniereAdministration" class="info-group info-group-warning">
+          <h4>Dernière administration</h4>
+          <p>{{ formatDate(selectedSoin.derniereAdministration) }}</p>
         </div>
       </div>
 
@@ -152,6 +156,10 @@
         </div>
 
         <div class="administration-confirmation">
+          <p v-if="selectedSoin.derniereAdministration" class="confirmation-warning">
+            <strong>Attention:</strong> Ce soin a déjà été administré le {{ formatDate(selectedSoin.derniereAdministration) }}.
+            Veuillez confirmer que vous souhaitez l'administrer à nouveau.
+          </p>
           <p>
             En soumettant ce formulaire, vous confirmez que le soin a été
             administré à {{ formatDate(currentDateTime) }}.
@@ -323,15 +331,11 @@ export default {
           this.formData
         );
 
-        // Utilisation du timestamp actuel pour la date d'administration
-        const date_heure = new Date().toISOString();
-
         const response = await axios.post(
-          "http://localhost:3002/administrationSoin/add",
+          "http://localhost:3002/administrationSoin",
           {
             id_soin: this.formData.id_soin,
             id_infirmier: this.formData.id_infirmier,
-            date_heure: date_heure,
             commentaires: this.formData.commentaires || null,
           }
         );
@@ -413,22 +417,15 @@ export default {
 }
 
 .alert-success {
-  background-color: #dff0d8;
-  border-color: #d6e9c6;
-  color: #3c763d;
+  background-color: #e8f5e9;
+  border-color: #a5d6a7;
+  color: #2e7d32;
 }
 
 .alert-error {
-  background-color: #f2dede;
-  border-color: #ebccd1;
-  color: #a94442;
-}
-
-/* Style pour le texte "Déjà administré" */
-.deja-administre {
-  color: #888;
-  font-style: italic;
-  font-size: 0.9em;
+  background-color: #ffebee;
+  border-color: #ef9a9a;
+  color: #c62828;
 }
 
 /* Section de sélection */
@@ -479,7 +476,8 @@ export default {
 }
 
 .btn-administrer {
-  background-color: #ccc;
+  background-color: #4caf50;
+  color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 4px;
@@ -487,10 +485,26 @@ export default {
 }
 
 .btn-administrer:hover {
-  background-color: #999;
+  background-color: #388e3c;
 }
 
-/* Le reste de vos styles CSS reste inchangé */
+.statut-administre {
+  color: #9e9e9e;
+  font-style: italic;
+  font-size: 14px;
+  display: inline-block;
+  padding: 5px 10px;
+}
+
+.soin-administre {
+  background-color: #fff8e1;
+}
+
+.date-administration {
+  color: #f57c00;
+  font-weight: bold;
+}
+
 /* Formulaire d'administration */
 .administration-form-container {
   background-color: #fff;
@@ -540,6 +554,12 @@ export default {
 
 .info-group p {
   margin: 0;
+}
+
+.info-group-warning {
+  background-color: #fff8e1;
+  padding: 8px;
+  border-radius: 4px;
 }
 
 /* Médicaments */
@@ -625,6 +645,11 @@ textarea.form-control {
   font-style: italic;
 }
 
+.confirmation-warning {
+  color: #f57c00;
+  margin-bottom: 10px;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -641,7 +666,8 @@ textarea.form-control {
 }
 
 .btn-save {
-  background-color: #ddd;
+  background-color: #4caf50;
+  color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 4px;
@@ -653,8 +679,14 @@ textarea.form-control {
   cursor: not-allowed;
 }
 
-.btn-cancel:hover,
-.btn-save:hover,
+.btn-cancel:hover {
+  background-color: #bbb;
+}
+
+.btn-save:hover {
+  background-color: #388e3c;
+}
+
 .btn-back:hover {
   background-color: #bbb;
 }

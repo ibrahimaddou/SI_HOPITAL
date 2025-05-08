@@ -1,174 +1,105 @@
 <template>
   <div class="container mx-auto p-4">
-    <h2 class="text-xl font-bold mb-4">Supprimer un patient</h2>
+    <button @click="chargerPatients" class="btn-charger">
+      Charger les patients
+    </button>
 
-    <!-- Sélecteur de patient -->
-    <div class="mb-6 bg-white p-4 rounded shadow">
-      <label class="block font-semibold mb-2"
-        >Sélectionnez un patient à supprimer :</label
-      >
-      <div class="mb-4">
-        <select
-          v-model="idPatientSelectionne"
-          class="w-full p-2 border rounded"
-          @change="chargerPatientDetails"
-        >
-          <option value="">-- Sélectionnez un patient --</option>
-          <option
-            v-for="patient in patients"
-            :key="patient.id_patient"
-            :value="patient.id_patient"
-          >
-            {{ patient.nom }} {{ patient.prenom }} ({{
-              formatDate(patient.date_naissance)
-            }})
-          </option>
-        </select>
-      </div>
-    </div>
+    <div v-if="chargement">Chargement en cours...</div>
 
-    <!-- Détails du patient sélectionné -->
-    <div v-if="patientSelectionne" class="mb-6 bg-white p-4 rounded shadow">
-      <h3 class="font-semibold text-lg mb-3">Détails du patient</h3>
+    <div v-if="erreur" class="erreur">{{ erreur }}</div>
 
-      <div v-if="dossier" class="mt-6 space-y-8">
-        <!-- Informations Personnelles -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">
-            Informations Personnelles
-          </h2>
-          <p>
-            <strong class="font-medium">Nom :</strong>
-            {{ dossier.antecedents?.nom }}
-          </p>
-          <p>
-            <strong class="font-medium">Prénom :</strong>
-            {{ dossier.antecedents?.prenom }}
-          </p>
-          <p>
-            <strong class="font-medium">Date de Naissance :</strong>
-            {{ formatDate(dossier.antecedents?.date_naissance) }}
-          </p>
-          <p>
-            <strong class="font-medium">Antécédents médicaux :</strong>
-            {{ dossier.antecedents?.antecedents_medicaux || "Aucun" }}
-          </p>
-        </div>
-
-        <!-- Visites -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">Visites</h2>
-          <div v-if="dossier.visites && dossier.visites.length > 0">
-            <ul class="space-y-4">
-              <li
-                v-for="visite in dossier.visites"
-                :key="visite.id_visite"
-                class="border-b pb-4"
-              >
-                <p>
-                  <strong>Date :</strong> {{ formatDate(visite.date_visite) }}
-                </p>
-                <p><strong>Examens :</strong> {{ visite.examens_pratiques }}</p>
-                <p><strong>Commentaires :</strong> {{ visite.commentaires }}</p>
-              </li>
-            </ul>
-          </div>
-          <div v-else class="text-gray-600">Aucune visite trouvée.</div>
-        </div>
-
-        <!-- Soins -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">Soins</h2>
-          <div v-if="dossier.soins && dossier.soins.length > 0">
-            <ul class="space-y-4">
-              <li
-                v-for="soin in dossier.soins"
-                :key="soin.id_soin"
-                class="border-b pb-4"
-              >
-                <p class="text-gray-700">{{ soin.description }}</p>
-              </li>
-            </ul>
-          </div>
-          <div v-else class="text-gray-600">Aucun soin enregistré.</div>
-        </div>
-
-        <!-- Séjours -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <h2 class="text-2xl font-semibold mb-4 text-gray-800">Séjours</h2>
-          <div v-if="dossier.sejours && dossier.sejours.length > 0">
-            <ul class="space-y-4">
-              <li
-                v-for="sejour in dossier.sejours"
-                :key="sejour.id_sejour"
-                class="border-b pb-4"
-              >
-                <p><strong>Lit :</strong> {{ sejour.id_lit }}</p>
-                <p>
-                  <strong>Date d'arrivée :</strong>
-                  {{ formatDate(sejour.date_arrivee) }}
-                </p>
-                <p>
-                  <strong>Sortie prévue :</strong>
-                  {{ formatDate(sejour.date_sortie_previsionnelle) }}
-                </p>
-                <p>
-                  <strong>Sortie réelle :</strong>
-                  {{
-                    sejour.date_sortie_reelle
-                      ? formatDate(sejour.date_sortie_reelle)
-                      : "Non sorti"
-                  }}
-                </p>
-                <p><strong>Raison :</strong> {{ sejour.raison_sejour }}</p>
-              </li>
-            </ul>
-          </div>
-          <div v-else class="text-gray-600">Aucun séjour enregistré.</div>
-        </div>
-      </div>
-
-      <!-- Confirmation de suppression -->
-      <div class="mt-6 bg-red-50 p-4 rounded border border-red-200">
-        <h4 class="font-semibold text-red-700 mb-2">
-          Attention ! Cette action est irréversible
-        </h4>
-        <p class="mb-4">
-          La suppression du patient entraînera également la suppression de
-          toutes ses données associées, y compris ses séjours, visites médicales
-          et soins.
+    <!-- Modal de confirmation -->
+    <div v-if="showConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Confirmation de suppression</h3>
+        <p>
+          Êtes-vous sûr de vouloir supprimer le patient
+          {{ patientASupprimer.prenom }} {{ patientASupprimer.nom }} ?
         </p>
-
-        <div class="flex items-center mb-4">
-          <input
-            v-model="confirmationSuppression"
-            type="checkbox"
-            id="confirmation"
-            class="mr-2"
-          />
-          <label for="confirmation"
-            >Je confirme vouloir supprimer définitivement ce patient et toutes
-            ses données associées</label
-          >
+        <div class="modal-buttons">
+          <button @click="confirmerSuppression" class="btn-confirmer">
+            Confirmer
+          </button>
+          <button @click="annulerSuppression" class="btn-annuler">
+            Annuler
+          </button>
         </div>
-
-        <button
-          @click="confirmerSuppression"
-          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
-          :disabled="!confirmationSuppression || suppressionEnCours"
-        >
-          {{
-            suppressionEnCours
-              ? "Suppression en cours..."
-              : "Supprimer définitivement"
-          }}
-        </button>
       </div>
     </div>
 
-    <!-- Message de résultat -->
-    <div v-if="message" class="mt-4 p-4 rounded" :class="messageClasse">
-      {{ message }}
+    <!-- Liste des patients -->
+    <div v-if="!chargement && !erreur && patients.length > 0">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Id
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Nom
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Prénom
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Date de naissance
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Antécédents médicaux
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="(patient, index) in patients" :key="index">
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ patient.id_patient }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ patient.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ patient.prenom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ formaterDate(patient.date_naissance) }}
+            </td>
+            <td class="px-6 py-4">
+              {{ patient.antecedents_medicaux }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <button
+                @click="demanderSuppression(patient)"
+                class="btn-supprimer"
+              >
+                Supprimer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Message de succès après suppression -->
+    <div v-if="messageSuccess" class="success-message">
+      {{ messageSuccess }}
+    </div>
+
+    <!-- Message si aucun patient trouvé après tentative de chargement -->
+    <div
+      v-if="!chargement && !erreur && patientsCherches && patients.length === 0"
+    >
+      Aucun patient trouvé.
     </div>
   </div>
 </template>
@@ -180,164 +111,201 @@ export default {
   data() {
     return {
       patients: [],
-      idPatientSelectionne: "",
-      patientSelectionne: null,
-      recherche: "",
-      donneesSejours: [],
-      donneesVisites: [],
-      donneesSoins: [],
-      confirmationSuppression: false,
-      suppressionEnCours: false,
-      message: "",
-      dossier: null,
-      messageClasse: "",
+      chargement: false,
+      erreur: null,
+      patientsCherches: false,
+      showConfirmModal: false,
+      patientASupprimer: null,
+      messageSuccess: null,
     };
-  },
-  mounted() {
-    this.chargerPatients();
   },
   methods: {
     chargerPatients() {
+      this.chargement = true;
+      this.erreur = null;
+      this.messageSuccess = null;
+
       axios
         .get("http://localhost:3002/patients")
         .then((response) => {
-          this.patients = response.data;
+          if (response.data && response.data.patients) {
+            this.patients = response.data.patients;
+          } else if (Array.isArray(response.data)) {
+            this.patients = response.data;
+          } else {
+            this.erreur = "Format de réponse incorrect";
+            console.error("Format incorrect:", response.data);
+          }
+          this.patientsCherches = true;
         })
         .catch((error) => {
-          console.error("Erreur lors du chargement des patients:", error);
-          this.afficherMessage(
-            "Erreur lors du chargement des patients",
-            "error"
-          );
+          this.erreur =
+            "Erreur lors du chargement des patients: " + error.message;
+          console.error("Erreur:", error);
+          this.patientsCherches = true;
+        })
+        .finally(() => {
+          this.chargement = false;
         });
+    },
+
+    formaterDate(dateStr) {
+      // Convertir la date au format français si nécessaire
+      if (!dateStr) return "";
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("fr-FR");
+    },
+
+    demanderSuppression(patient) {
+      this.patientASupprimer = patient;
+      this.showConfirmModal = true;
     },
 
     confirmerSuppression() {
-      if (!this.idPatientSelectionne) return;
+      if (!this.patientASupprimer) return;
 
-      this.suppressionEnCours = true;
+      this.chargement = true;
+      this.erreur = null;
+      this.messageSuccess = null;
 
       axios
         .delete(
-          `http://localhost:3002/supprimerPatients/${this.idPatientSelectionne}`
+          `http://localhost:3002/supprimerPatients/${this.patientASupprimer.id_patient}`
         )
         .then(() => {
-          this.afficherMessage("Patient supprimé avec succès", "success");
-          this.reinitialiser();
+          // Retirer le patient de la liste
+          this.patients = this.patients.filter(
+            (p) => p.id_patient !== this.patientASupprimer.id_patient
+          );
+          this.messageSuccess = `Le patient ${this.patientASupprimer.prenom} ${this.patientASupprimer.nom} a été supprimé avec succès.`;
         })
         .catch((error) => {
-          console.error("Erreur lors de la suppression :", error);
-          this.afficherMessage(
-            "Erreur lors de la suppression du patient",
-            "error"
-          );
+          if (error.response) {
+            // Récupérer le message d'erreur du serveur
+            this.erreur =
+              error.response.data.error ||
+              "Erreur lors de la suppression du patient";
+          } else {
+            this.erreur = "Erreur de connexion au serveur";
+          }
+          console.error("Erreur de suppression:", error);
         })
         .finally(() => {
-          this.suppressionEnCours = false;
-        });
-    },
-    rechercherPatients() {
-      if (!this.recherche) {
-        this.chargerPatients();
-        return;
-      }
-
-      axios
-        .get(`http://localhost:3002/patients/recherche?q=${this.recherche}`)
-        .then((response) => {
-          this.patients = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la recherche:", error);
-          this.afficherMessage(
-            "Erreur lors de la recherche de patients",
-            "error"
-          );
+          this.chargement = false;
+          this.showConfirmModal = false;
+          this.patientASupprimer = null;
         });
     },
 
-    async chargerPatientDetails() {
-      if (!this.idPatientSelectionne) {
-        this.patientSelectionne = null;
-        return;
-      }
-
-      try {
-        const response = await axios.get(
-          `http://localhost:3002/patients/${this.idPatientSelectionne}`
-        );
-        this.patientSelectionne = response.data;
-
-        await this.chargerDonneesAssociees(); // <== attendre le chargement
-      } catch (error) {
-        console.error(
-          "Erreur lors du chargement des détails du patient:",
-          error
-        );
-        this.afficherMessage(
-          "Erreur lors du chargement des détails du patient",
-          "error"
-        );
-      }
-    },
-
-    async chargerDonneesAssociees() {
-      this.message = "";
-      this.dossier = null;
-      try {
-        const response = await axios.get(
-          `http://localhost:3002/patient/dossier/${this.idPatientSelectionne}`
-        );
-        this.dossier = response.data;
-
-        console.log("Données du dossier reçues:", this.dossier);
-      } catch (error) {
-        console.error("Erreur lors du chargement du dossier patient:", error);
-        this.message =
-          "Erreur lors du chargement du dossier: " +
-          (error.response?.data || error.message);
-      }
-    },
-
-    afficherMessage(message, type) {
-      this.message = message;
-      if (type === "error") {
-        this.messageClasse = "bg-red-100 text-red-700 border border-red-500";
-      } else {
-        this.messageClasse =
-          "bg-green-100 text-green-700 border border-green-500";
-      }
-    },
-
-    reinitialiser() {
-      this.idPatientSelectionne = "";
-      this.patientSelectionne = null;
-      this.recherche = "";
-      this.donneesSejours = [];
-      this.donneesVisites = [];
-      this.donneesSoins = [];
-      this.confirmationSuppression = false;
-      this.chargerPatients();
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return "Non renseignée";
-
-      const date = new Date(dateString);
-      return date.toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+    annulerSuppression() {
+      this.showConfirmModal = false;
+      this.patientASupprimer = null;
     },
   },
 };
 </script>
 
 <style scoped>
-input:focus,
-select:focus {
-  outline: none;
-  border-color: #4f46e5;
+.erreur {
+  color: red;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+.success-message {
+  color: green;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-charger {
+  margin-top: 15px;
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-charger:hover {
+  background-color: #45a049;
+}
+
+.btn-supprimer {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-supprimer:hover {
+  background-color: #d32f2f;
+}
+
+.btn-confirmer {
+  background-color: #f44336;
+  color: white;
+  margin-right: 10px;
+}
+
+.btn-annuler {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+thead {
+  background-color: #f4f4f4;
+}
+
+/* Styles pour la modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 </style>
