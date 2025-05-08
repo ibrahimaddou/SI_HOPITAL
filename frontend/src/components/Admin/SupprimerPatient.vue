@@ -1,268 +1,297 @@
 <template>
-    <div class="container mx-auto p-4">
-      <h2 class="text-xl font-bold mb-4">Supprimer un patient</h2>
-      
-      <!-- Sélecteur de patient -->
-      <div class="mb-6 bg-white p-4 rounded shadow">
-        <label class="block font-semibold mb-2">Sélectionnez un patient à supprimer :</label>
-        <div class="mb-4">
-          <select 
-            v-model="idPatientSelectionne" 
-            class="w-full p-2 border rounded"
-            @change="chargerPatientDetails"
-          >
-            <option value="">-- Sélectionnez un patient --</option>
-            <option v-for="patient in patients" :key="patient.id_patient" :value="patient.id_patient">
-              {{ patient.nom }} {{ patient.prenom }} ({{ formatDate(patient.date_naissance) }})
-            </option>
-          </select>
+  <div class="container mx-auto p-4">
+    <button @click="chargerPatients" class="btn-charger">Charger les patients</button>
+
+    <div v-if="chargement">Chargement en cours...</div>
+
+    <div v-if="erreur" class="erreur">{{ erreur }}</div>
+
+    <!-- Modal de confirmation -->
+    <div v-if="showConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Confirmation de suppression</h3>
+        <p>Êtes-vous sûr de vouloir supprimer le patient {{ patientASupprimer.prenom }} {{ patientASupprimer.nom }} ?</p>
+        <div class="modal-buttons">
+          <button @click="confirmerSuppression" class="btn-confirmer">Confirmer</button>
+          <button @click="annulerSuppression" class="btn-annuler">Annuler</button>
         </div>
-        
-        <!-- Recherche de patient -->
-        <div class="mb-4">
-          <label class="block font-semibold mb-2">Ou recherchez par nom :</label>
-          <div class="flex">
-            <input 
-              v-model="recherche" 
-              type="text" 
-              placeholder="Nom ou prénom du patient" 
-              class="flex-grow p-2 border rounded-l"
-            />
-            <button 
-              @click="rechercherPatients" 
-              class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600"
-            >
-              Rechercher
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Détails du patient sélectionné -->
-      <div v-if="patientSelectionne" class="mb-6 bg-white p-4 rounded shadow">
-        <h3 class="font-semibold text-lg mb-3">Détails du patient</h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p><span class="font-semibold">Nom :</span> {{ patientSelectionne.nom }}</p>
-            <p><span class="font-semibold">Prénom :</span> {{ patientSelectionne.prenom }}</p>
-            <p><span class="font-semibold">Date de naissance :</span> {{ formatDate(patientSelectionne.date_naissance) }}</p>
-            <p><span class="font-semibold">Adresse :</span> {{ patientSelectionne.adresse || 'Non renseignée' }}</p>
-          </div>
-          <div>
-            <p><span class="font-semibold">Téléphone :</span> {{ patientSelectionne.telephone || 'Non renseigné' }}</p>
-            <p><span class="font-semibold">Email :</span> {{ patientSelectionne.email || 'Non renseigné' }}</p>
-            <p><span class="font-semibold">Antécédents médicaux :</span> {{ patientSelectionne.antecedents_medicaux || 'Aucun' }}</p>
-          </div>
-        </div>
-        
-        <!-- Données associées -->
-        <div class="mt-4">
-          <h4 class="font-semibold mb-2">Données associées qui seront également supprimées :</h4>
-          <ul class="list-disc pl-5">
-            <li>{{ donneesSejours.length }} séjour(s)</li>
-            <li>{{ donneesVisites.length }} visite(s) médicale(s)</li>
-            <li>{{ donneesSoins.length }} soin(s)</li>
-          </ul>
-        </div>
-        
-        <!-- Confirmation de suppression -->
-        <div class="mt-6 bg-red-50 p-4 rounded border border-red-200">
-          <h4 class="font-semibold text-red-700 mb-2">Attention ! Cette action est irréversible</h4>
-          <p class="mb-4">La suppression du patient entraînera également la suppression de toutes ses données associées, y compris ses séjours, visites médicales et soins.</p>
-          
-          <div class="flex items-center mb-4">
-            <input 
-              v-model="confirmationSuppression" 
-              type="checkbox" 
-              id="confirmation" 
-              class="mr-2"
-            />
-            <label for="confirmation">Je confirme vouloir supprimer définitivement ce patient et toutes ses données associées</label>
-          </div>
-          
-          <button 
-            @click="confirmerSuppression" 
-            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
-            :disabled="!confirmationSuppression || suppressionEnCours"
-          >
-            {{ suppressionEnCours ? 'Suppression en cours...' : 'Supprimer définitivement' }}
-          </button>
-        </div>
-      </div>
-      
-      <!-- Message de résultat -->
-      <div v-if="message" class="mt-4 p-4 rounded" :class="messageClasse">
-        {{ message }}
       </div>
     </div>
-  </template>
-  
-  <script>
-  import axios from "axios";
-  
-  export default {
-    data() {
-      return {
-        patients: [],
-        idPatientSelectionne: "",
-        patientSelectionne: null,
-        recherche: "",
-        donneesSejours: [],
-        donneesVisites: [],
-        donneesSoins: [],
-        confirmationSuppression: false,
-        suppressionEnCours: false,
-        message: "",
-        messageClasse: ""
-      };
-    },
-    mounted() {
-      this.chargerPatients();
-    },
-    methods: {
-      chargerPatients() {
-        axios.get("http://localhost:3002/patients")
-          .then(response => {
+
+    <!-- Liste des patients -->
+    <div v-if="!chargement && !erreur && patients.length > 0">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Id
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Nom
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Prénom
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Date de naissance
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Antécédents médicaux
+            </th>
+            <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr v-for="(patient, index) in patients" :key="index">
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ patient.id_patient }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ patient.nom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ patient.prenom }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {{ formaterDate(patient.date_naissance) }}
+            </td>
+            <td class="px-6 py-4">
+              {{ patient.antecedents_medicaux }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <button @click="demanderSuppression(patient)" class="btn-supprimer">
+                Supprimer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Message de succès après suppression -->
+    <div v-if="messageSuccess" class="success-message">
+      {{ messageSuccess }}
+    </div>
+
+    <!-- Message si aucun patient trouvé après tentative de chargement -->
+    <div
+      v-if="
+        !chargement && !erreur && patientsCherches && patients.length === 0
+      "
+    >
+      Aucun patient trouvé.
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  data() {
+    return {
+      patients: [],
+      chargement: false,
+      erreur: null,
+      patientsCherches: false,
+      showConfirmModal: false,
+      patientASupprimer: null,
+      messageSuccess: null
+    };
+  },
+  methods: {
+    chargerPatients() {
+      this.chargement = true;
+      this.erreur = null;
+      this.messageSuccess = null;
+
+      axios
+        .get("http://localhost:3002/patients")
+        .then((response) => {
+          if (response.data && response.data.patients) {
+            this.patients = response.data.patients;
+          } else if (Array.isArray(response.data)) {
             this.patients = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des patients:", error);
-            this.afficherMessage("Erreur lors du chargement des patients", "error");
-          });
-      },
-      
-      rechercherPatients() {
-        if (!this.recherche) {
-          this.chargerPatients();
-          return;
-        }
-        
-        axios.get(`http://localhost:3002/patients/recherche?q=${this.recherche}`)
-          .then(response => {
-            this.patients = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors de la recherche:", error);
-            this.afficherMessage("Erreur lors de la recherche de patients", "error");
-          });
-      },
-      
-      chargerPatientDetails() {
-        if (!this.idPatientSelectionne) {
-          this.patientSelectionne = null;
-          return;
-        }
-        
-        // Charger les détails du patient
-        axios.get(`http://localhost:3002/patients/${this.idPatientSelectionne}`)
-          .then(response => {
-            this.patientSelectionne = response.data;
-            
-            // Charger les données associées
-            this.chargerDonneesAssociees();
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des détails du patient:", error);
-            this.afficherMessage("Erreur lors du chargement des détails du patient", "error");
-          });
-      },
-      
-      chargerDonneesAssociees() {
-        // Charger les séjours
-        axios.get(`http://localhost:3002/sejours/patient/${this.idPatientSelectionne}`)
-          .then(response => {
-            this.donneesSejours = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des séjours:", error);
-            this.donneesSejours = [];
-          });
-        
-        // Charger les visites médicales
-        axios.get(`http://localhost:3002/visitesMedicales/patient/${this.idPatientSelectionne}`)
-          .then(response => {
-            this.donneesVisites = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des visites médicales:", error);
-            this.donneesVisites = [];
-          });
-        
-        // Charger les soins
-        axios.get(`http://localhost:3002/soins/patient/${this.idPatientSelectionne}`)
-          .then(response => {
-            this.donneesSoins = response.data;
-          })
-          .catch(error => {
-            console.error("Erreur lors du chargement des soins:", error);
-            this.donneesSoins = [];
-          });
-      },
-      
-      confirmerSuppression() {
-        if (!this.confirmationSuppression || !this.idPatientSelectionne) {
-          return;
-        }
-        
-        this.suppressionEnCours = true;
-        this.message = "";
-        
-        axios.delete(`http://localhost:3002/supprimerPatients/${this.idPatientSelectionne}`)
-          .then(() => {
-            this.afficherMessage("Le patient et toutes ses données associées ont été supprimés avec succès", "success");
-            this.reinitialiser();
-          })
-          .catch(error => {
-            console.error("Erreur lors de la suppression:", error);
-            this.afficherMessage(
-              "Erreur lors de la suppression du patient: " + 
-              (error.response?.data?.error || error.message), 
-              "error"
-            );
-          })
-          .finally(() => {
-            this.suppressionEnCours = false;
-          });
-      },
-      
-      afficherMessage(message, type) {
-        this.message = message;
-        if (type === "error") {
-          this.messageClasse = "bg-red-100 text-red-700 border border-red-500";
-        } else {
-          this.messageClasse = "bg-green-100 text-green-700 border border-green-500";
-        }
-      },
-      
-      reinitialiser() {
-        this.idPatientSelectionne = "";
-        this.patientSelectionne = null;
-        this.recherche = "";
-        this.donneesSejours = [];
-        this.donneesVisites = [];
-        this.donneesSoins = [];
-        this.confirmationSuppression = false;
-        this.chargerPatients();
-      },
-      
-      formatDate(dateString) {
-        if (!dateString) return "Non renseignée";
-        
-        const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric'
+          } else {
+            this.erreur = "Format de réponse incorrect";
+            console.error("Format incorrect:", response.data);
+          }
+          this.patientsCherches = true;
+        })
+        .catch((error) => {
+          this.erreur =
+            "Erreur lors du chargement des patients: " + error.message;
+          console.error("Erreur:", error);
+          this.patientsCherches = true;
+        })
+        .finally(() => {
+          this.chargement = false;
         });
-      }
+    },
+    
+    formaterDate(dateStr) {
+      // Convertir la date au format français si nécessaire
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('fr-FR');
+    },
+
+    demanderSuppression(patient) {
+      this.patientASupprimer = patient;
+      this.showConfirmModal = true;
+    },
+
+    confirmerSuppression() {
+      if (!this.patientASupprimer) return;
+      
+      this.chargement = true;
+      this.erreur = null;
+      this.messageSuccess = null;
+
+      axios
+        .delete(`http://localhost:3002/supprimerPatients/${this.patientASupprimer.id_patient}`)
+        .then(() => {
+          // Retirer le patient de la liste
+          this.patients = this.patients.filter(
+            (p) => p.id_patient !== this.patientASupprimer.id_patient
+          );
+          this.messageSuccess = `Le patient ${this.patientASupprimer.prenom} ${this.patientASupprimer.nom} a été supprimé avec succès.`;
+        })
+        .catch((error) => {
+          if (error.response) {
+            // Récupérer le message d'erreur du serveur
+            this.erreur = error.response.data.error || "Erreur lors de la suppression du patient";
+          } else {
+            this.erreur = "Erreur de connexion au serveur";
+          }
+          console.error("Erreur de suppression:", error);
+        })
+        .finally(() => {
+          this.chargement = false;
+          this.showConfirmModal = false;
+          this.patientASupprimer = null;
+        });
+    },
+
+    annulerSuppression() {
+      this.showConfirmModal = false;
+      this.patientASupprimer = null;
     }
-  };
-  </script>
-  
-  <style scoped>
-  input:focus, select:focus {
-    outline: none;
-    border-color: #4f46e5;
   }
-  </style>
+};
+</script>
+
+<style scoped>
+.erreur {
+  color: red;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+.success-message {
+  color: green;
+  margin: 10px 0;
+  padding: 10px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-charger {
+  margin-top: 15px;
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-charger:hover {
+  background-color: #45a049;
+}
+
+.btn-supprimer {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-supprimer:hover {
+  background-color: #d32f2f;
+}
+
+.btn-confirmer {
+  background-color: #f44336;
+  color: white;
+  margin-right: 10px;
+}
+
+.btn-annuler {
+  background-color: #9e9e9e;
+  color: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+thead {
+  background-color: #f4f4f4;
+}
+
+/* Styles pour la modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+</style>

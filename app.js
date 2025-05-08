@@ -639,19 +639,27 @@ app.get("/afficherSoinsPatient/:idPatient", async (req, res) => {
 app.delete("/supprimerPatients/:idPatient", async (req, res) => {
   try {
     const idPatient = req.params.idPatient;
-    
+   
     if (!idPatient) {
-      return res.status(400).send({ error: "id de patient obligatoire" });
+      return res.status(400).json({ error: "ID de patient obligatoire" });
     }
-    
-    await supprimerPatient(idPatient);
-    
-    res.status(200).send({ message: "patient supprimé avec succès" });
+   
+    const result = await supprimerPatient(idPatient);
+   
+    res.status(200).json(result);
   } catch (error) {
     console.error("Erreur lors de la suppression d'un patient: ", error);
-    res.status(500).send({ 
-      error: "Erreur serveur - suppression de patient", 
-      message: error.message 
+    
+    // Retourner un code d'erreur différent selon le type d'erreur
+    if (error.message.includes("n'existe pas")) {
+      return res.status(404).json({ error: error.message });
+    } else if (error.message.includes("également enregistrée comme membre du personnel")) {
+      return res.status(409).json({ error: error.message });
+    }
+    
+    res.status(500).json({
+      error: "Erreur serveur - suppression de patient",
+      message: error.message
     });
   }
 });
