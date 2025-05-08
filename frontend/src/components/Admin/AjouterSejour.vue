@@ -27,7 +27,7 @@
           <div class="mb-3">
             <label class="block mb-1">Patient *</label>
             <select
-              v-model="sejour.id_patient"
+              v-model="sejour.idPatient"
               required
               class="w-full p-2 border rounded"
             >
@@ -45,7 +45,7 @@
           <div class="mb-3">
             <label class="block mb-1">Raison du séjour *</label>
             <textarea
-              v-model="sejour.raison_sejour"
+              v-model="sejour.raisonSejour"
               required
               class="w-full p-2 border rounded"
               rows="3"
@@ -55,7 +55,7 @@
           <div class="mb-3">
             <label class="block mb-1">Date d'arrivée *</label>
             <input
-              v-model="sejour.date_arrivee"
+              v-model="sejour.dateArrivee"
               type="date"
               required
               class="w-full p-2 border rounded"
@@ -65,7 +65,7 @@
           <div class="mb-3">
             <label class="block mb-1">Date de sortie prévisionnelle</label>
             <input
-              v-model="sejour.date_sortie_previsionnelle"
+              v-model="sejour.dateSortiePrevisionnelle"
               type="date"
               class="w-full p-2 border rounded"
             />
@@ -119,7 +119,7 @@
           <div class="mb-3">
             <label class="block mb-1">Lit *</label>
             <select
-              v-model="sejour.id_lit"
+              v-model="sejour.idLit"
               required
               class="w-full p-2 border rounded"
               :disabled="!chambre"
@@ -130,7 +130,27 @@
                 :key="lit.id_lit"
                 :value="lit.id_lit"
               >
-                Lit n°{{ lit.numero }}
+                Lit n°{{ lit.numero_lit }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="block mb-1"
+              >Personnel administratif responsable *</label
+            >
+            <select
+              v-model="sejour.idAdminAffectation"
+              required
+              class="w-full p-2 border rounded"
+            >
+              <option value="">Sélectionnez un administratif</option>
+              <option
+                v-for="admin in personnelsAdmin"
+                :key="admin.id_personne"
+                :value="admin.id_personne"
+              >
+                {{ admin.nom }} {{ admin.prenom }}
               </option>
             </select>
           </div>
@@ -176,11 +196,12 @@ export default {
   data() {
     return {
       sejour: {
-        id_patient: "",
-        id_lit: "",
-        date_arrivee: "",
-        date_sortie_previsionnelle: "",
-        raison_sejour: "",
+        idPatient: "",
+        idLit: "",
+        dateArrivee: "",
+        dateSortiePrevisionnelle: "",
+        raisonSejour: "",
+        idAdminAffectation: "",
       },
       service: "",
       chambre: "",
@@ -226,16 +247,18 @@ export default {
     // Prépare les données à envoyer
     sejourDataToSend() {
       return {
-        id_patient: this.sejour.id_patient
-          ? parseInt(this.sejour.id_patient)
+        idPatient: this.sejour.idPatient
+          ? parseInt(this.sejour.idPatient)
           : null,
-        id_lit: this.sejour.id_lit ? parseInt(this.sejour.id_lit) : null,
-        date_arrivee: this.sejour.date_arrivee,
-        date_sortie_previsionnelle:
-          this.sejour.date_sortie_previsionnelle || null,
-        raison_sejour: this.sejour.raison_sejour
-          ? this.sejour.raison_sejour.trim()
+        idLit: this.sejour.idLit ? parseInt(this.sejour.idLit) : null,
+        dateArrivee: this.sejour.dateArrivee,
+        dateSortiePrevisionnelle: this.sejour.dateSortiePrevisionnelle || null,
+        raisonSejour: this.sejour.raisonSejour
+          ? this.sejour.raisonSejour.trim()
           : "",
+        idAdminAffectation: this.sejour.idAdminAffectation
+          ? parseInt(this.sejour.idAdminAffectation)
+          : null,
       };
     },
   },
@@ -304,6 +327,28 @@ export default {
             "error"
           );
         });
+
+      // Charger les personnels administratifs
+      axios
+        .get("http://localhost:3002/personnelsAdministratifs", {
+          headers: this.authHeaders,
+        })
+        .then((response) => {
+          console.log("Personnels administratifs chargés avec succès");
+          this.personnelsAdmin = response.data;
+        })
+        .catch((error) => {
+          console.error(
+            "Erreur lors du chargement des personnels administratifs:",
+            error
+          );
+          this.afficherMessage(
+            `Erreur lors du chargement des personnels administratifs: ${
+              error.response?.status === 401 ? "Non autorisé" : error.message
+            }`,
+            "error"
+          );
+        });
     },
 
     chargerChambres() {
@@ -311,7 +356,7 @@ export default {
         this.chambres = [];
         this.chambre = "";
         this.lits = [];
-        this.sejour.id_lit = "";
+        this.sejour.idLit = "";
         return;
       }
 
@@ -324,7 +369,7 @@ export default {
           this.chambres = response.data;
           this.chambre = "";
           this.lits = [];
-          this.sejour.id_lit = "";
+          this.sejour.idLit = "";
         })
         .catch((error) => {
           console.error("Erreur lors du chargement des chambres:", error);
@@ -340,18 +385,18 @@ export default {
     chargerLits() {
       if (!this.chambre) {
         this.lits = [];
-        this.sejour.id_lit = "";
+        this.sejour.idLit = "";
         return;
       }
 
       axios
-        .get(`http://localhost:3002/lits/${this.chambre}`, {
+        .get(`http://localhost:3002/litsDisponibles/${this.chambre}`, {
           headers: this.authHeaders,
         })
         .then((response) => {
           console.log("Lits chargés avec succès");
           this.lits = response.data;
-          this.sejour.id_lit = "";
+          this.sejour.idLit = "";
         })
         .catch((error) => {
           console.error("Erreur lors du chargement des lits:", error);
@@ -413,10 +458,11 @@ export default {
     soumettreFormulaire() {
       // Vérification des champs obligatoires
       if (
-        !this.sejour.id_patient ||
-        !this.sejour.id_lit ||
-        !this.sejour.date_arrivee ||
-        !this.sejour.raison_sejour.trim()
+        !this.sejour.idPatient ||
+        !this.sejour.idLit ||
+        !this.sejour.dateArrivee ||
+        !this.sejour.raisonSejour.trim() ||
+        !this.sejour.idAdminAffectation
       ) {
         console.log("Validation échouée: un ou plusieurs champs sont vides.");
         this.afficherMessage(
@@ -509,11 +555,12 @@ export default {
 
     reinitialiserFormulaire() {
       this.sejour = {
-        id_patient: "",
-        id_lit: "",
-        date_arrivee: "",
-        date_sortie_previsionnelle: "",
-        raison_sejour: "",
+        idPatient: "",
+        idLit: "",
+        dateArrivee: "",
+        dateSortiePrevisionnelle: "",
+        raisonSejour: "",
+        idAdminAffectation: "",
       };
       this.service = "";
       this.chambre = "";

@@ -10,7 +10,8 @@ import {   pool,ajouterSoin,ajouterReunion,ajouterVisiteMedicale,getSoinsPatient
     getSoinsAEffectuerByInfirmierId,ajouterAdministrationSoin,getAdministrationSoin,
     supprimerPatient,supprimerSejour,supprimerSoin,afficherReunions,supprimerReunion,
     getDossierPatient, getMedic_patient, getDetailReunionSoin,getVisitesMedicales,
-    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDispPchambre
+    getVisitesByMedecin,modifierSoin,getSoins,getSoinById,getPatientById,getLitsDisponiblesById,
+    supprimerVisiteMedicale,
 
   } from './configMySql/database.js'
 import cors from 'cors'
@@ -174,6 +175,11 @@ app.get("/litsDisponibles", async (req,res)=>{
 
   res.send(lits)
 })
+app.get("/litsDisponibles/:id_chambre", async (req, res) => { 
+  const id_chambre = req.params.id_chambre; 
+  const lits = await getLitsDisponiblesById(id_chambre); 
+  res.send(lits); 
+})
 app.get("/chambresVides", async (req,res)=>{
   const chambres = await getChambresVides()
 
@@ -333,10 +339,7 @@ app.post("/sejours", authenticateToken, async (req, res) => {
       raisonSejour
     } = req.body;
     
-    // Récupération de l'ID depuis le token JWT
-    const idAdministrateur = req.user.id;
-    
-    if (!idPatient || !idLit || !dateArrivee || !raisonSejour) {
+    if (!idPatient || !idLit || !dateArrivee || !raisonSejour ) {
       return res.status(400).send({ 
         error: "L'ID du patient, l'ID du lit, la date d'arrivée et la raison du séjour sont obligatoires" 
       });
@@ -491,7 +494,7 @@ app.get("/visitesMedecin/:id", async (req, res) => {
     res.status(500).send({ error: "Erreur serveur - récupération des visites du médecin" });
   }
 });
-app.post("/ajouterVisiteMedicale", async (req, res) => {
+app.post("/afficherVisitesMedicales", async (req, res) => {
   try {
     const {
       idPatient,
@@ -499,39 +502,34 @@ app.post("/ajouterVisiteMedicale", async (req, res) => {
       dateVisite,
       compteRendu,
       diagnostics,
-      prescriptions,
-      idSejour
+      prescriptions
     } = req.body;
     
+    // Vérification minimale des champs obligatoires
     if (!idPatient || !idMedecin || !dateVisite || !compteRendu) {
-      return res.status(400).send({
-        error: "L'ID du patient, l'ID du médecin, la date de visite et le compte-rendu sont obligatoires"
+      return res.status(400).json({ 
+        error: "Champs obligatoires manquants"
       });
     }
     
-    const visiteResult = await ajouterVisiteMedicale(
+    // Appel de la fonction avec les paramètres minimaux
+    const result = await ajouterVisiteMedicale(
       idPatient,
       idMedecin,
       dateVisite,
       compteRendu,
-      diagnostics,
-      prescriptions,
-      idSejour
+      diagnostics || prescriptions || ''  // Utiliser diagnostics ou prescriptions comme examens
     );
     
-    res.status(201).send(visiteResult);
+    res.status(201).json(result);
+    
   } catch (error) {
-    console.error("Erreur lors de l'ajout de la visite médicale! ", error);
-    
-    if (error.message) {
-      if (error.message.includes("Patient non trouvé") || 
-          error.message.includes("Médecin non trouvé") || 
-          error.message.includes("Séjour non trouvé")) {
-        return res.status(404).send({ error: error.message });
-      }
-    }
-    
-    res.status(500).send({ error: "Erreur serveur - ajout de la visite médicale" });
+    console.error("Erreur lors de l'ajout de la visite médicale:", error);
+    // Capturer et retourner l'erreur SQL pour le débogage
+    res.status(500).json({
+      error: "Erreur serveur - ajout de la visite médicale",
+      details: error.message  // Inclure les détails de l'erreur pour le débogage
+    });
   }
 });
 app.post("/reunions", async (req, res) => {
@@ -710,28 +708,26 @@ app.get("/administrationSoin", async (req, res) => {
   res.send(adminS)
 }) 
 
-app.post("/administrationSoin", (req, res) => {
-  const { id_soin, id_infirmier, date_heure, commentaires } = req.body;
-
-  // Vérifie que toutes les données sont présentes
-  if (!id_soin || !id_infirmier || !date_heure) {
-    return res.status(400).json({ message: "Champs manquants" });
+app.post("/administrationSoin/add", async (req, res) => {
+  try {
+    const { id_soin, id_infirmier, date_heure, commentaires } = req.body;
+    
+    // Vérifie que les données obligatoires sont présentes
+    if (!id_soin || !id_infirmier) {
+      return res.status(400).json({ message: "Champs obligatoires manquants (id_soin, id_infirmier)" });
+    }
+    
+    // Utilisez la date fournie ou créez-en une nouvelle
+    const dateAdmin = date_heure || new Date().toISOString();
+    
+    // Appel à la fonction métier avec tous les paramètres requis
+    const adminSoin = await ajouterAdministrationSoin(id_soin, id_infirmier, dateAdmin, commentaires);
+    
+    res.status(201).json(adminSoin);
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'une administration de soin:", error);
+    res.status(400).json({ message: error.message || "Erreur lors de l'ajout de l'administration" });
   }
-
-  // Ajoute dans la BDD ici (exemple avec pg)
-  const query = `
-    INSERT INTO administration_soins (id_soin, id_infirmier, date_heure, commentaires)
-    VALUES (?, ?, ?, ?)
-  `;
-
-  pool.query(query, [id_soin, id_infirmier, date_heure, commentaires || null])
-    .then(() => {
-      res.status(201).json({ message: "Administration enregistrée" });
-    })
-    .catch(error => {
-      console.error("Erreur d'insertion:", error);
-      res.status(500).json({ message: "Erreur serveur" });
-    });
 });
 app.get("/afficherSoinsPatient/:idPatient", async (req, res) => {
   try {

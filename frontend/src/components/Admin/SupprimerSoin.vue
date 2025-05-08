@@ -2,6 +2,11 @@
   <div class="container mx-auto p-4">
     <h2 class="text-xl font-bold mb-4">Supprimer un soin</h2>
 
+    <!-- Message de résultat -->
+    <div v-if="message" class="mt-4 p-4 rounded" :class="messageClasse">
+      {{ message }}
+    </div>
+
     <!-- Filtres de recherche -->
     <div class="mb-6 bg-white p-4 rounded shadow">
       <h3 class="font-semibold mb-3">Rechercher un soin</h3>
@@ -243,11 +248,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Message de résultat -->
-    <div v-if="message" class="mt-4 p-4 rounded" :class="messageClasse">
-      {{ message }}
-    </div>
   </div>
 </template>
 
@@ -255,6 +255,7 @@
 import axios from "axios";
 
 export default {
+  name: "SupprimerSoin",
   data() {
     return {
       soins: [],
@@ -271,9 +272,35 @@ export default {
       suppressionEnCours: false,
       message: "",
       messageClasse: "",
+      searchQuery: "",
     };
   },
+  computed: {
+    uniquePatients() {
+      const patients = [];
+      const patientIds = new Set();
+
+      this.soins.forEach((soin) => {
+        if (soin.id_patient && !patientIds.has(soin.id_patient)) {
+          patientIds.add(soin.id_patient);
+          patients.push({
+            id_patient: soin.id_patient,
+            nom_patient: soin.nom_patient,
+            prenom_patient: soin.prenom_patient,
+          });
+        }
+      });
+
+      return patients.sort((a, b) => {
+        return (
+          a.nom_patient.localeCompare(b.nom_patient) ||
+          a.prenom_patient.localeCompare(b.prenom_patient)
+        );
+      });
+    },
+  },
   mounted() {
+    console.log("Composant SupprimerSoin monté");
     this.chargerPatients();
     this.rechercherSoins();
   },
@@ -305,6 +332,10 @@ export default {
 
       if (this.filtreStatut) {
         params.append("statut", this.filtreStatut);
+      }
+
+      if (this.searchQuery && this.searchQuery.trim() !== "") {
+        params.append("search", this.searchQuery.trim());
       }
 
       if (params.toString()) {
@@ -368,10 +399,14 @@ export default {
     },
 
     peutEtreSupprime(soin) {
-      return soin.statut !== "termine"; // Exemple : on ne peut pas supprimer les soins terminés
+      // On peut supprimer uniquement les soins qui n'ont pas encore été administrés
+      return !soin.administrations || soin.administrations.length === 0;
     },
 
     getRaisonNonSupprimable(soin) {
+      if (soin.administrations && soin.administrations.length > 0) {
+        return "Ce soin a déjà été administré et ne peut pas être supprimé.";
+      }
       if (soin.statut === "termine") {
         return "Ce soin est terminé et ne peut pas être supprimé.";
       }
@@ -406,11 +441,21 @@ export default {
           this.rechercherSoins(); // Recharge les soins après suppression
           this.fermerModal();
         })
-        .catch(() => {
-          this.afficherMessage(
-            "Erreur lors de la suppression du soin",
-            "error"
-          );
+        .catch((error) => {
+          console.error("Erreur lors de la suppression du soin:", error);
+
+          let errorMessage = "Erreur lors de la suppression du soin.";
+
+          if (error.response) {
+            console.log("Détails de l'erreur:", error.response);
+            if (error.response.data && error.response.data.message) {
+              errorMessage = error.response.data.message;
+            } else if (error.response.data && error.response.data.error) {
+              errorMessage = error.response.data.error;
+            }
+          }
+
+          this.afficherMessage(errorMessage, "error");
         })
         .finally(() => {
           this.suppressionEnCours = false;
@@ -421,6 +466,19 @@ export default {
       this.message = message;
       this.messageClasse =
         type === "error" ? "bg-red-500 text-white" : "bg-green-500 text-white";
+
+      // Masquer le message après 5 secondes
+      setTimeout(() => {
+        this.message = "";
+        this.messageClasse = "";
+      }, 5000);
+    },
+
+    truncateText(text, maxLength) {
+      if (!text) return "";
+      return text.length > maxLength
+        ? text.substring(0, maxLength) + "..."
+        : text;
     },
   },
 };

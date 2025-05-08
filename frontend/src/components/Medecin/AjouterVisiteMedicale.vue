@@ -1,8 +1,11 @@
 <template>
   <div class="container mx-auto p-4">
-    <h2 class="text-xl font-bold mb-4">
-      Ajouter un compte-rendu de visite médicale
-    </h2>
+    <h2 class="text-xl font-bold mb-4">Planifier une visite médicale</h2>
+
+    <!-- Message d'alerte -->
+    <div v-if="message" class="mt-4 p-2 rounded" :class="messageClasse">
+      {{ message.text || message }}
+    </div>
 
     <form
       @submit.prevent="soumettreFormulaire"
@@ -51,27 +54,44 @@
             </select>
           </div>
 
-          <div class="mb-3">
-            <label class="block mb-1">Date de la visite *</label>
-            <input
-              v-model="visite.dateVisite"
-              type="datetime-local"
-              required
-              class="w-full p-2 border rounded"
-            />
+          <div class="mb-3 grid grid-cols-2 gap-2">
+            <div>
+              <label class="block mb-1">Date de la visite *</label>
+              <input
+                v-model="visite.dateVisiteDate"
+                type="date"
+                required
+                class="w-full p-2 border rounded"
+                :min="minDate"
+              />
+            </div>
+            <div>
+              <label class="block mb-1">Heure *</label>
+              <input
+                v-model="visite.dateVisiteTime"
+                type="time"
+                required
+                class="w-full p-2 border rounded"
+              />
+            </div>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-3" v-if="patientSejours.length > 0">
             <label class="block mb-1">Séjour associé (optionnel)</label>
             <select v-model="visite.idSejour" class="w-full p-2 border rounded">
               <option value="">Aucun séjour associé</option>
               <option
-                v-for="sejour in sejours"
+                v-for="sejour in patientSejours"
                 :key="sejour.id_sejour"
                 :value="sejour.id_sejour"
               >
                 Séjour #{{ sejour.id_sejour }} -
                 {{ formatDate(sejour.date_arrivee) }}
+                {{
+                  sejour.date_sortie_reelle
+                    ? `au ${formatDate(sejour.date_sortie_reelle)}`
+                    : "(en cours)"
+                }}
               </option>
             </select>
           </div>
@@ -79,15 +99,26 @@
 
         <!-- Compte-rendu -->
         <div>
-          <h3 class="font-semibold mb-2">Compte-rendu médical</h3>
+          <h3 class="font-semibold mb-2">Détails de la visite</h3>
 
           <div class="mb-3">
-            <label class="block mb-1">Compte-rendu de la visite *</label>
+            <label class="block mb-1">Compte-rendu préliminaire *</label>
             <textarea
               v-model="visite.compteRendu"
               required
               class="w-full p-2 border rounded"
-              rows="9"
+              rows="6"
+              placeholder="Décrivez le motif de la visite et les objectifs..."
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="block mb-1">Examens prévus</label>
+            <textarea
+              v-model="visite.examens"
+              class="w-full p-2 border rounded"
+              rows="3"
+              placeholder="Listez les examens qui seront effectués..."
             ></textarea>
           </div>
         </div>
@@ -237,24 +268,21 @@
         </div>
       </div>
 
-      <!-- Débug des valeurs du formulaire -->
-      <div class="mb-4 p-3 bg-gray-100 rounded">
-        <h3 class="font-semibold mb-2">Valeurs actuelles (débug):</h3>
-        <pre class="text-xs">{{ JSON.stringify(visite, null, 2) }}</pre>
-      </div>
-
-      <div class="mt-4">
+      <div class="form-actions mt-4">
+        <button
+          type="button"
+          @click="reinitialiserFormulaire"
+          class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 mr-2"
+        >
+          Annuler
+        </button>
         <button
           type="submit"
           class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          :disabled="envoiEnCours"
+          :disabled="envoiEnCours || !isFormValid"
         >
           {{ envoiEnCours ? "Enregistrement..." : "Enregistrer" }}
         </button>
-      </div>
-
-      <div v-if="message" class="mt-4 p-2 rounded" :class="messageClasse">
-        {{ message }}
       </div>
     </form>
   </div>
@@ -264,14 +292,18 @@
 import axios from "axios";
 
 export default {
+  name: "AjouterVisiteMedicale",
   data() {
+    const today = new Date();
     return {
       visite: {
         idPatient: "",
         idMedecin: "",
-        dateVisite: new Date().toISOString().slice(0, 16),
+        dateVisiteDate: today.toISOString().split("T")[0],
+        dateVisiteTime: "09:00",
         compteRendu: "",
         idSejour: "",
+        examens: "",
         diagnostics: [],
         prescriptions: [],
       },
@@ -280,55 +312,101 @@ export default {
       sejours: [],
       envoiEnCours: false,
       message: "",
-      messageClasse: "",
+      messageClasse: "bg-blue-100 text-blue-700 border border-blue-500",
+      loading: {
+        patients: false,
+        medecins: false,
+        sejours: false,
+        submit: false,
+      },
     };
   },
+  computed: {
+    minDate() {
+      // La date d'aujourd'hui au format YYYY-MM-DD pour le champ date
+      const today = new Date();
+      return today.toISOString().split("T")[0];
+    },
+    patientSejours() {
+      // Filtrer les séjours du patient sélectionné
+      if (!this.visite.idPatient) return [];
+      return this.sejours.filter(
+        (sejour) => sejour.id_patient == this.visite.idPatient
+      );
+    },
+    isFormValid() {
+      return (
+        this.visite.idPatient &&
+        this.visite.idMedecin &&
+        this.visite.dateVisiteDate &&
+        this.visite.dateVisiteTime &&
+        this.visite.compteRendu
+      );
+    },
+  },
   mounted() {
+    console.log("Composant AjouterVisiteMedicale monté");
     this.chargerDonnees();
   },
   methods: {
-    chargerDonnees() {
-      // Charger les patients
-      axios
-        .get("http://localhost:3002/patients")
-        .then((response) => {
-          this.patients = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des patients:", error);
-          this.afficherMessage(
-            "Erreur lors du chargement des patients",
-            "error"
-          );
-        });
+    async chargerDonnees() {
+      this.fetchPatients();
+      this.fetchMedecins();
+      this.fetchSejours();
+    },
 
-      // Charger les médecins
-      axios
-        .get("http://localhost:3002/medecins")
-        .then((response) => {
-          this.medecins = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des médecins:", error);
-          this.afficherMessage(
-            "Erreur lors du chargement des médecins",
-            "error"
-          );
+    async fetchPatients() {
+      try {
+        this.loading.patients = true;
+        console.log("Récupération des patients...");
+        const response = await axios.get("http://localhost:3002/patients");
+        this.patients = response.data;
+        console.log("Patients récupérés:", this.patients);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des patients:", error);
+        this.afficherMessage({
+          type: "error",
+          text: "Erreur lors du chargement des patients. Veuillez réessayer.",
         });
+      } finally {
+        this.loading.patients = false;
+      }
+    },
 
-      // Charger les séjours actifs
-      axios
-        .get("http://localhost:3002/sejours")
-        .then((response) => {
-          this.sejours = response.data;
-        })
-        .catch((error) => {
-          console.error("Erreur lors du chargement des séjours:", error);
-          this.afficherMessage(
-            "Erreur lors du chargement des séjours",
-            "error"
-          );
+    async fetchMedecins() {
+      try {
+        this.loading.medecins = true;
+        console.log("Récupération des médecins...");
+        const response = await axios.get("http://localhost:3002/medecins");
+        this.medecins = response.data;
+        console.log("Médecins récupérés:", this.medecins);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des médecins:", error);
+        this.afficherMessage({
+          type: "error",
+          text: "Erreur lors du chargement des médecins. Veuillez réessayer.",
         });
+      } finally {
+        this.loading.medecins = false;
+      }
+    },
+
+    async fetchSejours() {
+      try {
+        this.loading.sejours = true;
+        console.log("Récupération des séjours...");
+        const response = await axios.get("http://localhost:3002/sejours");
+        this.sejours = response.data;
+        console.log("Séjours récupérés:", this.sejours);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des séjours:", error);
+        this.afficherMessage({
+          type: "error",
+          text: "Erreur lors du chargement des séjours. Veuillez réessayer.",
+        });
+      } finally {
+        this.loading.sejours = false;
+      }
     },
 
     ajouterDiagnostic() {
@@ -351,14 +429,8 @@ export default {
       this.visite.prescriptions.splice(index, 1);
     },
 
-    soumettreFormulaire() {
-      // Vérification des champs obligatoires
-      if (
-        !this.visite.idPatient ||
-        !this.visite.idMedecin ||
-        !this.visite.dateVisite ||
-        !this.visite.compteRendu
-      ) {
+    async soumettreFormulaire() {
+      if (!this.isFormValid) {
         this.afficherMessage(
           "Veuillez remplir tous les champs obligatoires",
           "error"
@@ -370,52 +442,81 @@ export default {
       this.envoiEnCours = true;
       this.message = "";
 
-      console.log("Envoi des données:", this.visite);
+      try {
+        // Combiner la date et l'heure en un format ISO
+        const dateVisite = new Date(
+          `${this.visite.dateVisiteDate}T${this.visite.dateVisiteTime}`
+        );
+        const dateVisiteString = dateVisite.toISOString().split(".")[0];
 
-      axios
-        .post("http://localhost:3002/ajouterVisiteMedicale", this.visite)
-        .then((response) => {
-          console.log("Réponse du serveur:", response.data);
-          this.afficherMessage(
-            "Visite médicale ajoutée avec succès",
-            "success"
-          );
-          this.reinitialiserFormulaire();
-        })
-        .catch((error) => {
-          console.error("Erreur lors de l'ajout:", error);
-          console.error("Détails de l'erreur:", error.response?.data);
-          this.afficherMessage(
-            "Erreur lors de l'ajout de la visite médicale: " +
-              (error.response?.data?.error || error.message),
-            "error"
-          );
-        })
-        .finally(() => {
-          this.envoiEnCours = false;
-        });
+        const requestData = {
+          idPatient: this.visite.idPatient,
+          idMedecin: this.visite.idMedecin,
+          dateVisite: dateVisiteString,
+          compteRendu: this.visite.compteRendu,
+          idSejour: this.visite.idSejour || undefined,
+          diagnostics: this.visite.diagnostics,
+          prescriptions: this.visite.prescriptions,
+        };
+
+        console.log("Envoi des données:", requestData);
+
+        const response = await axios.post(
+          "http://localhost:3002/ajouterVisiteMedicale",
+          requestData
+        );
+        console.log("Réponse du serveur:", response.data);
+
+        this.afficherMessage("Visite médicale ajoutée avec succès", "success");
+
+        this.reinitialiserFormulaire();
+      } catch (error) {
+        console.error("Erreur lors de l'ajout:", error);
+        console.error("Détails de l'erreur:", error.response?.data);
+
+        this.afficherMessage(
+          "Erreur lors de l'ajout de la visite médicale: " +
+            (error.response?.data?.error || error.message),
+          "error"
+        );
+      } finally {
+        this.envoiEnCours = false;
+      }
     },
 
     afficherMessage(message, type) {
-      this.message = message;
+      if (typeof message === "object" && message.text) {
+        this.message = message;
+        type = message.type;
+      } else {
+        this.message = { text: message };
+      }
+
       if (type === "error") {
         this.messageClasse = "bg-red-100 text-red-700 border border-red-500";
-      } else {
+      } else if (type === "success") {
         this.messageClasse =
           "bg-green-100 text-green-700 border border-green-500";
+      } else {
+        this.messageClasse = "bg-blue-100 text-blue-700 border border-blue-500";
       }
     },
 
     reinitialiserFormulaire() {
+      const today = new Date();
       this.visite = {
         idPatient: "",
         idMedecin: "",
-        dateVisite: new Date().toISOString().slice(0, 16),
+        dateVisiteDate: today.toISOString().split("T")[0],
+        dateVisiteTime: "09:00",
         compteRendu: "",
         idSejour: "",
+        examens: "",
         diagnostics: [],
         prescriptions: [],
       };
+
+      this.message = "";
     },
 
     formatDate(date) {
@@ -433,5 +534,10 @@ select:focus,
 textarea:focus {
   outline: none;
   border-color: #4f46e5;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

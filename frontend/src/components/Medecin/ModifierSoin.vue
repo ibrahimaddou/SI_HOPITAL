@@ -1,14 +1,19 @@
-// SOLUTION COMPLÈTE POUR LE COMPOSANT VUE
 <template>
   <div class="container mx-auto p-4">
-    <!-- Formulaire de recherche du soin -->
+    <!-- Message d'alerte général -->
+    <div v-if="message" class="mt-4 p-2 rounded" :class="messageClasse">
+      {{ message }}
+    </div>
 
+    <!-- Section de recherche ou liste des soins -->
     <div
       v-if="!soinTrouve && !chargementEnCours"
       class="bg-white p-4 rounded shadow mb-4"
     >
       <h2 class="text-xl font-bold mb-4">Rechercher un soin à modifier</h2>
-      <div class="flex space-x-2">
+
+      <!-- Recherche par ID -->
+      <div class="flex space-x-2 mb-4">
         <div class="flex-grow">
           <input
             v-model="idSoinRecherche"
@@ -25,6 +30,7 @@
           {{ rechercheEnCours ? "Recherche..." : "Rechercher" }}
         </button>
       </div>
+
       <div
         v-if="messageRecherche"
         class="mt-2 p-2 rounded"
@@ -32,8 +38,75 @@
       >
         {{ messageRecherche }}
       </div>
+
+      <!-- OU utiliser un tableau de tous les soins disponibles -->
+      <div class="mt-6">
+        <h3 class="text-lg font-semibold mb-2">
+          Ou sélectionner un soin dans la liste
+        </h3>
+
+        <div class="mb-4">
+          <input
+            type="text"
+            class="w-full p-2 border rounded"
+            placeholder="Rechercher un soin..."
+            v-model="searchQuery"
+          />
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border px-4 py-2 text-left">ID</th>
+                <th class="border px-4 py-2 text-left">Description</th>
+                <th class="border px-4 py-2 text-left">Patient</th>
+                <th class="border px-4 py-2 text-left">Réunion</th>
+                <th class="border px-4 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loading">
+                <td colspan="5" class="border px-4 py-2 text-center">
+                  Chargement...
+                </td>
+              </tr>
+              <tr v-else-if="filteredSoins.length === 0">
+                <td colspan="5" class="border px-4 py-2 text-center">
+                  Aucun soin trouvé
+                </td>
+              </tr>
+              <tr
+                v-for="soin in filteredSoins"
+                :key="soin.id_soin"
+                class="hover:bg-gray-50"
+              >
+                <td class="border px-4 py-2">{{ soin.id_soin }}</td>
+                <td class="border px-4 py-2">
+                  {{ truncateText(soin.description, 30) }}
+                </td>
+                <td class="border px-4 py-2">
+                  {{ soin.nom_patient }} {{ soin.prenom_patient }}
+                </td>
+                <td class="border px-4 py-2">
+                  {{ formatDate(soin.date_reunion) }}
+                </td>
+                <td class="border px-4 py-2">
+                  <button
+                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                    @click="selectSoin(soin)"
+                  >
+                    Modifier
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
+    <!-- Indicateur de chargement -->
     <div v-if="chargementEnCours" class="text-center py-8">
       <div
         class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"
@@ -41,6 +114,7 @@
       <p class="mt-2">Chargement en cours...</p>
     </div>
 
+    <!-- Formulaire de modification du soin -->
     <div v-else-if="soinTrouve">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Modifier le soin #{{ idSoin }}</h2>
@@ -48,7 +122,7 @@
           @click="retourRecherche"
           class="px-3 py-1 bg-gray-400 text-white rounded hover:bg-gray-500 text-sm"
         >
-          Rechercher un autre soin
+          Retour à la liste
         </button>
       </div>
 
@@ -256,7 +330,7 @@
           <button
             type="submit"
             class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            :disabled="envoiEnCours"
+            :disabled="envoiEnCours || !isFormValid"
           >
             {{
               envoiEnCours
@@ -273,10 +347,6 @@
             Annuler
           </button>
         </div>
-
-        <div v-if="message" class="mt-4 p-2 rounded" :class="messageClasse">
-          {{ message }}
-        </div>
       </form>
     </div>
   </div>
@@ -286,14 +356,26 @@
 import axios from "axios";
 
 export default {
+  name: "ModifierSoin",
   data() {
     return {
+      // Recherche
       idSoinRecherche: "",
-      idSoin: null,
-      soinTrouve: false,
       rechercheEnCours: false,
       messageRecherche: "",
       messageRechercheClasse: "",
+      searchQuery: "",
+      loading: true,
+
+      // État du composant
+      idSoin: null,
+      soinTrouve: false,
+      chargementEnCours: false,
+      envoiEnCours: false,
+      message: "",
+      messageClasse: "",
+
+      // Données du soin
       soin: {
         id_patient: "",
         id_reunion_decision: "",
@@ -304,19 +386,59 @@ export default {
         id_medicament: "",
         quantite: "",
       },
+
+      // Données associées
+      soins: [],
       administrations: [],
       patients: [],
       reunions: [],
       medicaments: [],
-      chargementEnCours: false,
-      envoiEnCours: false,
-      message: "",
-      messageClasse: "",
     };
   },
+  computed: {
+    filteredSoins() {
+      if (!this.searchQuery.trim()) {
+        return this.soins;
+      }
+
+      const query = this.searchQuery.toLowerCase();
+      return this.soins.filter((soin) => {
+        return (
+          (soin.description &&
+            soin.description.toLowerCase().includes(query)) ||
+          (soin.nom_patient &&
+            soin.nom_patient.toLowerCase().includes(query)) ||
+          (soin.prenom_patient &&
+            soin.prenom_patient.toLowerCase().includes(query)) ||
+          (soin.id_soin && soin.id_soin.toString().includes(query))
+        );
+      });
+    },
+    isFormValid() {
+      // Vérifier que tous les champs obligatoires sont remplis
+      if (
+        !this.soin.description ||
+        !this.soin.id_patient ||
+        !this.soin.id_reunion_decision
+      ) {
+        return false;
+      }
+
+      // Si des médicaments sont présents, vérifier qu'ils sont tous valides
+      for (const med of this.soin.medicaments) {
+        if (!med.id_medicament || !med.quantite) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+  },
   mounted() {
-    // Charger les données de base (patients, réunions, médicaments)
-    this.chargerDonneesDeBase();
+    console.log("Composant ModifierSoin monté");
+
+    // Charger les données de base (patients, réunions, médicaments, liste des soins)
+    this.chargerToutesDonnees();
 
     // Si l'ID est fourni dans l'URL, on tente de le récupérer
     if (this.$route.params.id) {
@@ -325,26 +447,43 @@ export default {
     }
   },
   methods: {
-    async chargerDonneesDeBase() {
+    async chargerToutesDonnees() {
       try {
-        // Charger les données de base (patients, réunions, médicaments)
-        const [patientsResponse, reunionsResponse, medicamentsResponse] =
-          await Promise.all([
-            axios.get("http://localhost:3002/patients"),
-            axios.get("http://localhost:3002/reunions"),
-            axios.get("http://localhost:3002/afficherMedicaments"),
-          ]);
+        this.loading = true;
 
+        // Charger toutes les données nécessaires en parallèle
+        const [
+          soinsResponse,
+          patientsResponse,
+          reunionsResponse,
+          medicamentsResponse,
+        ] = await Promise.all([
+          axios.get("http://localhost:3002/soins"),
+          axios.get("http://localhost:3002/patients"),
+          axios.get("http://localhost:3002/reunions"),
+          axios.get("http://localhost:3002/afficherMedicaments"),
+        ]);
+
+        this.soins = soinsResponse.data;
         this.patients = patientsResponse.data;
         this.reunions = reunionsResponse.data;
         this.medicaments = medicamentsResponse.data;
+
+        console.log("Données chargées:", {
+          soins: this.soins,
+          patients: this.patients,
+          reunions: this.reunions,
+          medicaments: this.medicaments,
+        });
       } catch (error) {
-        console.error("Erreur lors du chargement des données de base:", error);
+        console.error("Erreur lors du chargement des données:", error);
         this.afficherMessage(
           "Erreur lors du chargement des données: " +
             (error.response?.data?.message || error.message),
           "error"
         );
+      } finally {
+        this.loading = false;
       }
     },
 
@@ -407,6 +546,74 @@ export default {
       }
     },
 
+    selectSoin(soin) {
+      console.log("Soin sélectionné pour modification:", soin);
+
+      this.chargementEnCours = true;
+
+      // Utiliser les données du soin et récupérer les médicaments associés
+      this.idSoin = soin.id_soin;
+      this.soin = {
+        id_patient: soin.id_patient,
+        id_reunion_decision: soin.id_reunion_decision,
+        description: soin.description,
+        medicaments: [],
+      };
+
+      // Charger les médicaments et données détaillées du soin
+      this.fetchSoinMedicaments(soin.id_soin)
+        .then(() => {
+          this.soinTrouve = true;
+          this.chargementEnCours = false;
+        })
+        .catch((error) => {
+          console.error(
+            "Erreur lors de la récupération des détails du soin:",
+            error
+          );
+          this.afficherMessage(
+            "Erreur lors du chargement des données du soin",
+            "error"
+          );
+          this.chargementEnCours = false;
+        });
+    },
+
+    async fetchSoinMedicaments(idSoin) {
+      try {
+        // Si votre API le permet, récupérer les médicaments associés au soin
+        const response = await axios.get(
+          `http://localhost:3002/afficherMedicamentsPatient/${idSoin}`
+        );
+
+        if (response.data && Array.isArray(response.data)) {
+          this.soin.medicaments = response.data.map((med) => ({
+            id_medicament: med.id_medicament,
+            quantite: med.quantite,
+          }));
+        }
+
+        // Optionnel: récupérer l'historique des administrations si disponible
+        try {
+          const adminResponse = await axios.get(
+            `http://localhost:3002/administrations/${idSoin}`
+          );
+          if (adminResponse.data && Array.isArray(adminResponse.data)) {
+            this.administrations = adminResponse.data;
+          }
+        } catch (adminError) {
+          console.log("Pas d'administrations disponibles pour ce soin");
+          this.administrations = [];
+        }
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des médicaments du soin:",
+          error
+        );
+        throw error;
+      }
+    },
+
     retourRecherche() {
       this.soinTrouve = false;
       this.idSoin = null;
@@ -419,6 +626,13 @@ export default {
         medicaments: [],
       };
       this.administrations = [];
+    },
+
+    truncateText(text, maxLength) {
+      if (!text) return "";
+      return text.length > maxLength
+        ? text.substring(0, maxLength) + "..."
+        : text;
     },
 
     formatDate(dateString) {
@@ -484,11 +698,7 @@ export default {
 
     async soumettreFormulaire() {
       // Vérification des champs obligatoires
-      if (
-        !this.soin.id_patient ||
-        !this.soin.id_reunion_decision ||
-        !this.soin.description
-      ) {
+      if (!this.isFormValid) {
         this.afficherMessage(
           "Veuillez remplir tous les champs obligatoires",
           "error"
@@ -516,7 +726,7 @@ export default {
           JSON.stringify(soinData, null, 2)
         );
 
-        // Ajouter des headers spécifiques pour le debugging
+        // Envoyer la demande de modification
         const response = await axios.put(
           `http://localhost:3002/modifierSoin/${this.idSoin}`,
           soinData,
@@ -524,7 +734,6 @@ export default {
             headers: {
               "Content-Type": "application/json",
             },
-            // Ajouter un timeout plus long pour voir si c'est un problème de délai
             timeout: 10000,
           }
         );
@@ -534,7 +743,10 @@ export default {
         if (response.data.success) {
           this.afficherMessage("Soin modifié avec succès", "success");
 
-          // Mettre à jour les données affichées
+          // Mettre à jour la liste des soins dans le tableau
+          await this.chargerToutesDonnees();
+
+          // Mettre à jour les données affichées si nécessaire
           if (response.data.soin) {
             this.soin = {
               id_patient: response.data.soin.id_patient,
@@ -589,6 +801,13 @@ export default {
       } else {
         this.messageClasse =
           "bg-green-100 text-green-700 border border-green-500";
+      }
+
+      // Masquer le message après 5 secondes pour les messages de succès
+      if (type === "success") {
+        setTimeout(() => {
+          this.message = "";
+        }, 5000);
       }
     },
   },

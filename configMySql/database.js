@@ -324,6 +324,31 @@ export async function getLitsDisponibles() {
     `);
   return rows;
 }
+export async function getLitsDisponiblesById(id_chambre) {
+  const [rows] = await pool.query(`
+    SELECT
+        l.id_lit,
+        l.numero AS numero_lit,
+        c.numero AS numero_chambre,
+        c.etage,
+        s.nom AS service
+    FROM
+        Lit l
+        INNER JOIN Chambre c ON l.id_chambre = c.id_chambre
+        INNER JOIN Service s ON c.id_service = s.id_service
+    WHERE
+        l.id_lit NOT IN (
+            SELECT sej.id_lit
+            FROM Sejour sej
+            WHERE sej.date_sortie_reelle IS NULL
+        )
+        AND c.id_chambre = ?
+    ORDER BY
+        l.numero;
+    `, [id_chambre]);
+  
+  return rows;
+}
 export async function getChambresVides() {
   const [rows] = await pool.query(`
     SELECT 
@@ -884,33 +909,38 @@ export async function getAdministrationSoin() {
     `);
   return adminS;
 }
-export async function ajouterAdministrationSoin(id_soin, id_infirmier, commentaires) {
-  // pour vérifier que le soin existe
+export async function ajouterAdministrationSoin(id_soin, id_infirmier, date_heure, commentaires) {
+  // Vérifier que le soin existe
   const [soinExists] = await pool.query(
-    "SELECT id_soin FROM Soin WHERE id_soin = ?", 
+    "SELECT id_soin FROM Soin WHERE id_soin = ?",
     [id_soin]
   );
   
   if (soinExists.length === 0) {
     throw new Error("Le soin spécifié n'existe pas");
   }
-    const [infirmierExists] = await pool.query(
-    "SELECT id_infirmier FROM Infirmier WHERE id_infirmier = ?", 
+  
+  // Vérifier que l'infirmier existe
+  const [infirmierExists] = await pool.query(
+    "SELECT id_infirmier FROM Infirmier WHERE id_infirmier = ?",
     [id_infirmier]
   );
   
   if (infirmierExists.length === 0) {
-    throw new Error("infirmier n'existe pas");
+    throw new Error("L'infirmier spécifié n'existe pas");
   }
   
-  const date_heure = new Date();
+  // Utiliser la date fournie ou la date actuelle
+  const adminDate = date_heure ? new Date(date_heure) : new Date();
   
+  // Insertion dans la base de données
   const [result] = await pool.query(`
     INSERT INTO Administration_Soin 
-    (id_soin, id_infirmier, date_heure, commentaires) 
+    (id_soin, id_infirmier, date_heure, commentaires)
     VALUES (?, ?, ?, ?)
-  `, [id_soin, id_infirmier, date_heure, commentaires]);
+  `, [id_soin, id_infirmier, adminDate, commentaires]);
   
+  // Récupération de l'administration insérée avec informations complémentaires
   const [administration] = await pool.query(`
     SELECT 
       ad.id_administration,
@@ -934,7 +964,7 @@ export async function ajouterAdministrationSoin(id_soin, id_infirmier, commentai
       ad.id_administration = ?
   `, [result.insertId]);
   
-  return administration;
+  return administration[0]; // Renvoyer le premier élément du tableau pour avoir un objet simple
 }
 //supprimerPatient
 export async function supprimerPatient(idPatient) {
@@ -1183,6 +1213,7 @@ export async function supprimerReunion(idReunion) {
   }
 }
 //supprimer visiteMed
+// Fonction à ajouter dans database.js
 export async function supprimerVisiteMedicale(idVisite) {
   try {
     await pool.query('START TRANSACTION');
@@ -1194,6 +1225,15 @@ export async function supprimerVisiteMedicale(idVisite) {
     
     if (visiteExists.length === 0) {
       throw new Error("La visite médicale spécifiée n'existe pas");
+    }
+    
+    // Vérifier si la visite n'a pas encore eu lieu (la date est dans le futur)
+    const visite = visiteExists[0];
+    const dateVisite = new Date(visite.date_visite);
+    const maintenant = new Date();
+    
+    if (dateVisite <= maintenant) {
+      throw new Error("Impossible de supprimer une visite médicale déjà effectuée");
     }
     
     // Supprimer la visite médicale
@@ -1383,99 +1423,46 @@ export async function getVisitesByMedecin(idMedecin) {
   return visites;
 }
 //pour ajouter une visite Medicale
+// Fonction à ajouter dans database.js
 export async function ajouterVisiteMedicale(
   idPatient,
   idMedecin,
   dateVisite,
   compteRendu,
-  diagnostics,
-  prescriptions,
-  idSejour = null
+  examens = '',
+  commentaires = ''
 ) {
-  const [patient] = await pool.query(`
-    SELECT * FROM Patient WHERE id = ?
-  `, [idPatient]);
-  
-  if (patient.length === 0) {
-    throw new Error('Patient non trouvé');
-  }
-  
-  const [medecin] = await pool.query(`
-    SELECT * FROM Medecin WHERE id = ?
-  `, [idMedecin]);
-  
-  if (medecin.length === 0) {
-    throw new Error('Médecin non trouvé');
-  }
-  
-  if (idSejour) {
-    const [sejour] = await pool.query(`
-      SELECT * FROM Sejour WHERE id = ? AND id_patient = ?
-    `, [idSejour, idPatient]);
-    
-    if (sejour.length === 0) {
-      throw new Error('Séjour non trouvé ou ne correspond pas au patient');
-    }
-  }
-
-  const [resultVisite] = await pool.query(`
-    INSERT INTO VisiteMedicale (
-      id_patient,
-      id_medecin,
-      date_visite,
-      compte_rendu,
-      id_sejour
-    )
-    VALUES (?, ?, ?, ?, ?);
-  `, [
-    idPatient,
-    idMedecin,
-    dateVisite,
-    compteRendu,
-    idSejour
-  ]);
-  
-  const idVisite = resultVisite.insertId;
-  
-  if (diagnostics && diagnostics.length > 0) {
-    const diagnosticValues = diagnostics.map(diagnostic => 
-      [idVisite, diagnostic.code, diagnostic.description]
+  try {
+    // Insertion directe dans la table Visite_Medicale
+    const [result] = await pool.query(
+      `INSERT INTO Visite_Medicale (
+        id_patient,
+        id_medecin,
+        date_visite,
+        examens_pratiques,
+        commentaires
+      ) VALUES (?, ?, ?, ?, ?)`,
+      [
+        idPatient,
+        idMedecin,
+        dateVisite,
+        examens,
+        compteRendu
+      ]
     );
     
-    await pool.query(`
-      INSERT INTO Diagnostic (id_visite, code, description)
-      VALUES ?;
-    `, [diagnosticValues]);
+    return {
+      id_visite: result.insertId,
+      id_patient: idPatient,
+      id_medecin: idMedecin,
+      date_visite: dateVisite,
+      examens_pratiques: examens,
+      commentaires: compteRendu
+    };
+  } catch (error) {
+    console.error("Erreur lors de l'ajout d'une visite médicale:", error);
+    throw error;
   }
-  
-  if (prescriptions && prescriptions.length > 0) {
-    const prescriptionValues = prescriptions.map(prescription => 
-      [idVisite, prescription.medicament, prescription.posologie, prescription.duree]
-    );
-    
-    await pool.query(`
-      INSERT INTO Prescription (id_visite, medicament, posologie, duree)
-      VALUES ?;
-    `, [prescriptionValues]);
-  }
-  
-  const [visite] = await pool.query(`
-    SELECT * FROM VisiteMedicale WHERE id = ?
-  `, [idVisite]);
-  
-  const [diagnosticsResult] = await pool.query(`
-    SELECT * FROM Diagnostic WHERE id_visite = ?
-  `, [idVisite]);
-  
-  const [prescriptionsResult] = await pool.query(`
-    SELECT * FROM Prescription WHERE id_visite = ?
-  `, [idVisite]);
-  
-  return {
-    ...visite[0],
-    diagnostics: diagnosticsResult,
-    prescriptions: prescriptionsResult
-  };
 }
 export async function ajouterReunion(dateReunion, sujet, compteRendu, medecinIds, infirmierIds) {
   const connection = await pool.getConnection();
