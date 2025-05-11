@@ -230,7 +230,7 @@
               class="nav-button sub-item"
               :class="{'active': activeComponent === 'SupprimerSejour'}"
             >
-              Supprimer Séjour
+              Gestion Séjour
             </button>
             <button 
               @click="activeComponent = 'SupprimerSoin'"

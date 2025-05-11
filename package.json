@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "npx nodemon app.js",
-    "serve": "cd ./frontend && vue-cli-service serve",
+    "serve": "cd ./frontend && npm run serve",
     "dev": "concurrently \"npm run serve\" \"npm run start\""
   },
   "keywords": [],

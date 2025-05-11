@@ -126,6 +126,13 @@ export default {
         this.afficherMessage("Veuillez remplir tous les champs obligatoires", "error");
         return;
       }
+      const aujourdhui = new Date();
+    const dateNaissanceObj = new Date(this.patient.date_naissance);
+      if (dateNaissanceObj>aujourdhui) {
+        this.afficherMessage("Date de naissance invalide !", "error");
+        return;
+      }
+
       
       this.envoiEnCours = true;
       this.message = "";

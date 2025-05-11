@@ -485,6 +485,14 @@ export async function getEtatOccupationService(idService, date) {
  * Vérifie uniquement par ID (lors de la création en base de données)
  */
 export async function ajouterPatient(nom, prenom, dateNaissance, adresse, telephone, email, antecedentsMedicaux) {
+     const dateNaissanceObj = new Date(dateNaissance);
+    const aujourdhui = new Date();
+    
+    
+    // Vérifier que la date n'est pas dans le futur
+    if (dateNaissanceObj > aujourdhui) {
+      throw new Error("La date de naissance ne peut pas être dans le futur");
+    }
   try {
     // Démarrer une transaction
     await pool.query('START TRANSACTION');
